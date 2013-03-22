@@ -1,0 +1,8 @@
+.*
+!.git*
+
+*.pyc
+
+libtcod.cfg
+*.dll
+*.so
