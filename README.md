@@ -13,3 +13,7 @@ details and instructions are available in the file [libtcod-needs-dlls.md](libtc
 NP-Complete is distributed under the terms of the
 [MIT license](http://opensource.org/licenses/mit-license.html),
 available in this package in the file [LICENSE](LICENSE).
+
+The menu background is "[Earth Horizon with UFO or Star](https://secure.flickr.com/photos/donkeyhotey/6143616487/)"
+by flickr user "[DonkeyHotey](https://secure.flickr.com/photos/donkeyhotey/)", and is licensed
+under the [Creative Commons - Attribution](http://creativecommons.org/licenses/by/2.0/) license.
