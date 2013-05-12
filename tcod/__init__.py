@@ -40,19 +40,21 @@ def set_custom_font(fontfile, flags=libtcod.FONT_LAYOUT_ASCII_INROW, horizontal_
     return libtcod.console_set_custom_font(fontfile, flags, horizontal_count, vertical_count)
 
 def init_root(width, height, title, fullscreen=False, renderer=libtcod.RENDERER_SDL):
+    root_console.height = height
+    root_console.width = width
     return libtcod.console_init_root(width, height, title, fullscreen, renderer)
 
 def wait_for_keypress(flush=False):
     return libtcod.console_wait_for_keypress(flush)
 
-key, mouse = (libtcod.Key(), libtcod.Mouse())
+tcod_ctypes_key, tcod_ctypes_mouse = (libtcod.Key(), libtcod.Mouse())
 def wait_for_event(mask=libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE, flush=False):
-    libtcod.sys_wait_for_event(mask, key, mouse, flush)
-    return (key, mouse)
+    libtcod.sys_wait_for_event(mask, tcod_ctypes_key, tcod_ctypes_mouse, flush)
+    return (tcod_ctypes_key, tcod_ctypes_mouse)
 
 def check_for_event(mask=libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE):
-    libtcod.sys_check_for_event(mask, key, mouse)
-    return (key, mouse)
+    libtcod.sys_check_for_event(mask, tcod_ctypes_key, tcod_ctypes_mouse)
+    return (tcod_ctypes_key, tcod_ctypes_mouse)
 
 def set_fullscreen(want_fullscreen=True):
     return libtcod.console_set_fullscreen(want_fullscreen)
@@ -139,10 +141,9 @@ class Console(object):
 
     def get_height_rect(self, x=0, y=0, width=None, height=None, text=''):
         if width is None:
-            width = self.width
+            width = self.width - x
         if height is None:
-            height = self.height
-
+            height = self.height - y
         return libtcod.console_get_height_rect(self.console_id, x, y, width, height, text)
 
     def print_rect_ex(self, x=0, y=0, width=None, height=None, effect=libtcod.BKGND_NONE,
@@ -150,7 +151,7 @@ class Console(object):
         if width is None:
             width = self.width
         if height is None:
-            height = self.height
+            height = 0
 
         return libtcod.console_print_rect_ex(self.console_id, x, y, width, height, effect, align, text)
 
