@@ -136,6 +136,14 @@ class Console(object):
     def rect(self, x, y, width, height, clear=False, effect=libtcod.BKGND_SET):
         return libtcod.console_rect(self.console_id, x, y, width, height, clear, effect)
 
+    def print_frame(self, x=0, y=0, width=None, height=None, clear=True, effect=libtcod.BKGND_SET):
+        if width is None:
+            width = self.width - x
+        if height is None:
+            height = self.height - y
+
+        return libtcod.console_print_frame(self.console_id, x, y, width, height, clear, effect)
+
     def clear(self):
         return libtcod.console_clear(self.console_id)
 
