@@ -22,9 +22,28 @@ def main_menu():
     tcod.root_console.set_default_foreground(tcod.color.WHITE)
     tcod.root_console.set_default_background(tcod.color.BLACK)
 
-    menu = widgets.Widget(width=tcod.root_console.width, height=tcod.root_console.height)
-    slow_print(menu, "NP-Complete")
+    top = widgets.Widget(width=tcod.root_console.width, height=tcod.root_console.height)
+    slow_print(top, "NP-Complete")
     time.sleep(0.2)
-    slow_print(menu, "Survival is a Hard problem", y=2)
+    slow_print(top, "Survival is a Hard problem", y=2)
 
-    tcod.wait_for_keypress(True)
+    l = widgets.List(parent=top)
+    l.add_item("New game")
+    l.add_item("Load game", disabled=True)
+    quit_item = l.add_item("Quit")
+    l.hcenter_in_parent()
+    l.vcenter_in_parent()
+
+    quitting = False
+    while not quitting:
+        l.render()
+        tcod.flush()
+
+        key, mouse = tcod.wait_for_event(tcod.event.KEY_PRESS)
+        if tcod.is_window_closed():
+            quitting = True
+        elif key.vk == tcod.key.ENTER:
+            if l.selected_item is quit_item:
+                quitting = True
+        else:
+            l.handle_event(widgets.event.KEY, key)
