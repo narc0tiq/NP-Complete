@@ -149,9 +149,9 @@ class Console(object):
     def print_rect_ex(self, x=0, y=0, width=None, height=None, effect=libtcod.BKGND_NONE,
                       align=libtcod.LEFT, text=''):
         if width is None:
-            width = self.width
+            width = self.width - x
         if height is None:
-            height = 0
+            height = self.height - y
 
         return libtcod.console_print_rect_ex(self.console_id, x, y, width, height, effect, align, text)
 
