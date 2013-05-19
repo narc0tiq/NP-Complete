@@ -42,9 +42,19 @@ class Rect(object):
     def right(self):
         return self.left + self.width
 
+    @right.setter
+    def right(self, value):
+        diff = value - self.right
+        self.left += diff
+
     @property
     def bottom(self):
         return self.top + self.height
+
+    @bottom.setter
+    def bottom(self, value):
+        diff = value - self.bottom
+        self.top += diff
 
     @property
     def center(self):
