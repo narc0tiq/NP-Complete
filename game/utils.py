@@ -2,6 +2,7 @@ from collections import namedtuple
 import sys, time
 
 Point = namedtuple('Point', ['x', 'y'])
+origin = Point(0, 0)
 
 class Rect(object):
     """
