@@ -29,17 +29,15 @@ class Widget(object):
 
     def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0):
         self.parent = parent
-        self.children = set()
+        self.children = []
         self.console = console
+        self.fgcolor = tcod.color.WHITE
+        self.bgcolor = tcod.color.BLACK
 
         if self.parent is not None:
-            self.parent.register_child(self)
-
             if self.console is None:
                 self.console = self.parent.console
-
-            x = x + self.parent.rect.left
-            y = y + self.parent.rect.top
+            self.parent.register_child(self)
 
         if self.console is None: #, even after all that,
             self.console = tcod.root_console
@@ -48,7 +46,7 @@ class Widget(object):
 
     def register_child(self, child):
         child.parent = self
-        self.children.add(child)
+        self.children.append(child)
 
     def point_to_screen(self, point):
         """ Translates a Point(x,y) inside this widget into screen coordinates """
@@ -89,15 +87,28 @@ class Widget(object):
 
         return False
 
-    def hcenter_in_parent(self):
+    def center_in_parent(self, horizontal=True, vertical=True):
         if self.parent is None:
-            raise ValueError("Widget trying to hcenter in non-existent parent")
-        self.rect.left = (self.parent.rect.width - self.rect.width) / 2
+            raise ValueError("Widget trying to center in non-existent parent")
+        if horizontal:
+            self.rect.left = (self.parent.rect.width - self.rect.width) / 2
+        if vertical:
+            self.rect.top = (self. parent.rect.height - self.rect.height) / 2
 
-    def vcenter_in_parent(self):
-        if self.parent is None:
-            raise ValueError("Widget trying to vcenter in non-existent parent")
-        self.rect.top = (self. parent.rect.height - self.rect.height) / 2
+    def center_in_console(self, horizontal=True, vertical=True):
+        if horizontal:
+            self.rect.left = (self.console.width - self.rect.width) / 2
+        if vertical:
+            self.rect.top = (self.console.height - self.rect.height) / 2
+
+class Image(Widget):
+    def __init__(self, path, parent=None, console=None, x=0, y=0, width=0, height=0):
+        super(Image, self).__init__(parent, console, x, y, width, height)
+        self.image = tcod.ImageFile(path)
+
+    def render(self):
+        self.image.blit_2x(self.console)
+        super(Image, self).render()
 
 class Label(Widget):
     def __init__(self, parent=None, console=None, x=0, y=0, text="", width=0):
@@ -129,8 +140,49 @@ class Label(Widget):
     def render(self):
         x,y = self.point_to_screen(utils.origin)
 
+        self.console.set_default_foreground(self.fgcolor)
+        self.console.set_default_background(self.bgcolor)
         self.console.print_rect_ex(x, y, self.rect.width, self.rect.height,
                                    self.effect, self.align, self._text)
+
+        super(Label, self).render()
+
+class Button(Widget):
+    def __init__(self, shortcut_text, label, parent=None, console=None, x=0, y=0, width=0, key_trigger=None, action=None):
+        super(Button, self).__init__(parent, console, x, y, width, height=1)
+        self.key_trigger = key_trigger
+        self.action = action
+        self.shortcut_fgcolor = tcod.color.LIME
+
+        self.label = Label(parent=self, text=" %s %s " % (shortcut_text, label))
+        if self.rect.width < 1:
+            self.rect.resize(width=self.label.rect.width)
+        elif self.rect.width < self.label.rect.width:
+            raise ValueError("Button's assigned width is insufficient!")
+        else:
+            self.label.center_in_parent()
+
+        self.shortcut = Label(parent=self, text=shortcut_text, x=self.label.rect.left+1)
+        self.shortcut.fgcolor = tcod.color.LIME
+
+    def render(self):
+        self.console.set_default_background(self.bgcolor)
+        origin = self.point_to_screen(utils.origin)
+        self.console.rect(origin.x, origin.y, width=self.rect.width, height=1)
+
+        super(Button, self).render()
+
+        self.console.set_default_foreground(self.fgcolor)
+        self.console.put_char(origin.x, origin.y, '[')
+        self.console.put_char(origin.x + self.rect.width - 1, origin.y, ']')
+
+    def handle_event(self, ev):
+        if(self.action is not None and ev.type is events.KEY and
+           self.key_trigger is not None and self.key_trigger(ev.data)):
+            self.action()
+            return True
+
+        super(Button, self).handle_event(ev)
 
 ListItem = collections.namedtuple("ListItem", ["label", "disabled", "on_activate"])
 
@@ -144,6 +196,8 @@ class List(Widget):
         self.sub_console = None
         self.scroll_y = 0
         self.render_item_override = None
+        self.selected_bgcolor = tcod.color.AZURE
+        self.disabled_fgcolor = tcod.color.DARK_GREY
 
     def add_item(self, label, disabled=False, on_activate=None):
         """
@@ -219,18 +273,18 @@ class List(Widget):
         for i in self.items:
             height = self.sub_console.get_height_rect(0, y, text=i.label)
 
-            bgcolor = tcod.color.BLACK
+            bgcolor = self.bgcolor
             if self.selected_item is i:
-                bgcolor = tcod.color.AZURE
+                bgcolor = self.selected_bgcolor
                 self.scroll_to(y, height)
             self.sub_console.set_default_background(bgcolor)
             self.sub_console.rect(0, y, self.rect.width, height, clear=True)
-            self.sub_console.set_default_background(tcod.color.BLACK)
+            self.sub_console.set_default_background(self.bgcolor)
 
             if i.disabled:
-                self.sub_console.set_default_foreground(tcod.color.GRAY)
+                self.sub_console.set_default_foreground(self.disabled_fgcolor)
             else:
-                self.sub_console.set_default_foreground(tcod.color.WHITE)
+                self.sub_console.set_default_foreground(self.fgcolor)
 
             self.sub_console.print_rect_ex(0, y, text=i.label)
             if self.render_item_override:
@@ -256,15 +310,29 @@ class List(Widget):
 
         return super(List, self).handle_event(ev)
 
-class Menu(Widget):
+class Dialog(Widget):
+    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0):
+        super(Dialog, self).__init__(parent, console, x, y, width, height)
+
+    def render(self):
+        self.console.set_default_foreground(self.fgcolor)
+        self.console.set_default_background(self.bgcolor)
+        self.console.print_frame(self.rect.left, self.rect.top, self.rect.width, self.rect.height)
+        super(Dialog, self).render()
+
+class Menu(Dialog):
     def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0):
         super(Menu, self).__init__(parent, console, x, y, width, height)
         self.init_width = width
         self.init_height = height
         self.list = List(parent=self, x=x+1, y=y+1, width=max(0, width-2), height=max(0, height-2))
+        self.list.render_item_override = self.render_item
         self.keys = {}
+        self.shortcut_fgcolor = tcod.color.LIME
+        self.disabled_shortcut_fgcolor = tcod.color.LIGHT_GREY
 
     def add_item(self, key, label, disabled=False, on_activate=None):
+        label = key + " " + label
         item = self.list.add_item(label, disabled, on_activate)
         self.calc_size()
         self.keys[key] = item
@@ -280,10 +348,12 @@ class Menu(Widget):
         if self.init_height < 1:
             self.rect.height = self.list.rect.height + 2
 
-    def render(self):
-        self.console.set_default_foreground(tcod.color.WHITE)
-        self.console.print_frame(self.rect.left, self.rect.top, self.rect.width, self.rect.height)
-        super(Menu, self).render()
+    def render_item(self, console, item, x, y, width, height):
+        console.set_default_foreground(self.shortcut_fgcolor)
+        if item.disabled:
+            console.set_default_foreground(self.disabled_shortcut_fgcolor)
+        console.put_char(x, y, item.label[0])
+        console.set_default_foreground(self.fgcolor)
 
     def handle_event(self, ev):
         if ev.type == events.KEY and chr(ev.data.c) in self.keys:

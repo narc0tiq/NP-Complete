@@ -122,8 +122,14 @@ class Console(object):
     def set_default_background(self, color):
         return libtcod.console_set_default_background(self.console_id, color)
 
+    def get_default_background(self):
+        return libtcod.console_get_default_background(self.console_id)
+
     def set_default_foreground(self, color):
         return libtcod.console_set_default_foreground(self.console_id, color)
+
+    def get_default_foreground(self):
+        return libtcod.console_get_default_foreground(self.console_id)
 
     def set_char_background(self, x, y, color, flags=libtcod.BKGND_SET):
         return libtcod.console_set_char_background(self.console_id, x, y, color, flags)

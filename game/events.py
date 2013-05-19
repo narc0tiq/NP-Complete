@@ -10,6 +10,11 @@ id = lambda: counter.next()
 QUIT = id()
 MOUSE = id()
 KEY = id()
+LAUNCH = id()
+# Dialog events:
+OK = id()
+CANCEL = id()
+APPLY = id()
 
 queue = Queue.PriorityQueue()
 Event = namedtuple("Event", ["type", "data"])
