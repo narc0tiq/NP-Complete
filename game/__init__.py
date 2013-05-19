@@ -2,7 +2,7 @@
 import time
 
 import tcod
-from game import widgets
+from game import events, widgets
 
 def slow_print(widget, text, y=1):
     label = widgets.Label(parent=widget, y=y, text=text)
@@ -16,6 +16,13 @@ def slow_print(widget, text, y=1):
         tcod.flush()
         time.sleep(0.05)
 
+def get_keys():
+    """ Grab all the key events from libtcod and {events.post} them. """
+    key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS)
+    while key.vk != tcod.key.NONE:
+        events.post(events.KEY, key)
+        key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS)
+
 def main_menu():
     img = tcod.ImageFile("menu_bg.png")
     img.blit_2x(tcod.root_console)
@@ -28,9 +35,9 @@ def main_menu():
     slow_print(top, "Survival is a Hard problem", y=2)
 
     m = widgets.Menu(parent=top)
-    m.add_item("New game")
-    m.add_item("Load game", disabled=True)
-    quit_item = m.add_item("Quit")
+    m.add_item("n", "New game")
+    m.add_item("l", "Load game", disabled=True)
+    quit_item = m.add_item("q", "Quit", on_activate=lambda: events.post(events.QUIT))
     m.hcenter_in_parent()
     m.vcenter_in_parent()
 
@@ -39,11 +46,14 @@ def main_menu():
         m.render()
         tcod.flush()
 
-        key, mouse = tcod.wait_for_event(tcod.event.KEY_PRESS)
+        # Get the input...
+        get_keys()
         if tcod.is_window_closed():
-            quitting = True
-        elif key.vk == tcod.key.ENTER:
-            if m.selected_item is quit_item:
+            events.post(events.QUIT)
+
+        # ...and handle it:
+        for event in events.generator():
+            if event.type == events.QUIT:
                 quitting = True
-        else:
-            m.handle_event(widgets.event.KEY, key)
+            else:
+                top.handle_event(event)

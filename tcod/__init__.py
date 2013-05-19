@@ -47,14 +47,15 @@ def init_root(width, height, title, fullscreen=False, renderer=libtcod.RENDERER_
 def wait_for_keypress(flush=False):
     return libtcod.console_wait_for_keypress(flush)
 
-tcod_ctypes_key, tcod_ctypes_mouse = (libtcod.Key(), libtcod.Mouse())
 def wait_for_event(mask=libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE, flush=False):
-    libtcod.sys_wait_for_event(mask, tcod_ctypes_key, tcod_ctypes_mouse, flush)
-    return (tcod_ctypes_key, tcod_ctypes_mouse)
+    key, mouse = (libtcod.Key(), libtcod.Mouse())
+    libtcod.sys_wait_for_event(mask, key, mouse, flush)
+    return (key, mouse)
 
 def check_for_event(mask=libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE):
-    libtcod.sys_check_for_event(mask, tcod_ctypes_key, tcod_ctypes_mouse)
-    return (tcod_ctypes_key, tcod_ctypes_mouse)
+    key, mouse = (libtcod.Key(), libtcod.Mouse())
+    libtcod.sys_check_for_event(mask, key, mouse)
+    return (key, mouse)
 
 def set_fullscreen(want_fullscreen=True):
     return libtcod.console_set_fullscreen(want_fullscreen)

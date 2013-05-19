@@ -56,3 +56,7 @@ class Rect(object):
         return (self.left <= other.right and self.right >= other.left and
                 self.top <= other.bottom and self.bottom >= other.top)
 
+    def contains(self, point):
+        return (self.left <= point.x < self.right and
+                self.top <= point.y < self.bottom)
+

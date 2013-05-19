@@ -2,10 +2,7 @@
 import collections
 
 import tcod
-from game import utils
-
-class event:
-    KEY, MOUSE = range(2)
+from game import events, utils
 
 class Widget(object):
     """
@@ -81,13 +78,13 @@ class Widget(object):
         for child in self.children:
             child.render()
 
-    def handle_event(self, ev, data):
+    def handle_event(self, ev):
         """
         The default implementation just asks children if they want it. If they
         return True, they did.
         """
         for child in self.children:
-            if child.handle_event(ev, data):
+            if child.handle_event(ev):
                 return True
 
         return False
@@ -244,13 +241,20 @@ class List(Widget):
                               draw_width, draw_height,
                               self.console, origin.x, origin.y)
 
-    def handle_event(self, ev, data):
-        if ev == event.KEY:
+    def handle_event(self, ev):
+        if ev.type == events.KEY:
             selected_index = self.items.index(self.selected_item)
-            if data.vk == tcod.key.DOWN and (selected_index+1) < len(self.items):
+            if ev.data.vk == tcod.key.DOWN and (selected_index+1) < len(self.items):
                 self.selected_item = self.items[selected_index + 1]
-            elif data.vk == tcod.key.UP and selected_index > 0:
+                return True
+            elif ev.data.vk == tcod.key.UP and selected_index > 0:
                 self.selected_item = self.items[selected_index - 1]
+                return True
+            elif ev.data.vk == tcod.key.ENTER and self.selected_item.on_activate:
+                self.selected_item.on_activate()
+                return True
+
+        return super(List, self).handle_event(ev)
 
 class Menu(Widget):
     def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0):
@@ -258,10 +262,12 @@ class Menu(Widget):
         self.init_width = width
         self.init_height = height
         self.list = List(parent=self, x=x+1, y=y+1, width=max(0, width-2), height=max(0, height-2))
+        self.keys = {}
 
-    def add_item(self, label, disabled=False, on_activate=None):
+    def add_item(self, key, label, disabled=False, on_activate=None):
         item = self.list.add_item(label, disabled, on_activate)
         self.calc_size()
+        self.keys[key] = item
         return item
 
     @property
@@ -278,3 +284,10 @@ class Menu(Widget):
         self.console.set_default_foreground(tcod.color.WHITE)
         self.console.print_frame(self.rect.left, self.rect.top, self.rect.width, self.rect.height)
         super(Menu, self).render()
+
+    def handle_event(self, ev):
+        if ev.type == events.KEY and chr(ev.data.c) in self.keys:
+            self.list.selected_item = self.keys[chr(ev.data.c)]
+            return True
+
+        return super(Menu, self).handle_event(ev)
