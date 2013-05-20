@@ -2,6 +2,7 @@
 !.git*
 
 *.pyc
+data/config.cfg
 
 libtcod.cfg
 *.dll

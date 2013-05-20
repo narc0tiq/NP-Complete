@@ -2,7 +2,7 @@
 import time
 
 import tcod
-from game import events, widgets
+from game import config, events, widgets
 
 def slow_print(widget, text, y=1):
     label = widgets.Label(parent=widget, y=y, text=text)
@@ -78,5 +78,10 @@ def options_menu():
                         key_trigger=lambda k: k.vk==tcod.key.ENTER,
                         action=lambda: events.post(events.OK))
     b2.rect.right = b.rect.left - 1
+
+    options = widgets.List(parent=top, x=1, y=1, width=20, height=28)
+    options.add_item("Window width: %d" % config.parser.getint("core", "width"))
+    options.add_item("Window height: %d" % config.parser.getint("core", "height"))
+    options.add_item("Fullscreen: %s" % config.parser.getboolean("core", "fullscreen"))
 
     main_loop(top, dialog=True)
