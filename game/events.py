@@ -24,6 +24,7 @@ def post(type, data=None):
 
 def generator():
     try:
-        yield queue.get(False)
+        while True:
+            yield queue.get(False)
     except Queue.Empty:
         raise StopIteration()

@@ -15,32 +15,32 @@ def slow_print(widget, text, y=1):
         widget.render()
         tcod.flush() # Relying on the tcod.set_fps_limit() from earlier to limit our render rate
 
-def get_keys():
-    """ Grab all the key events from libtcod and {events.post} them. """
-    key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS)
+def get_input():
+    """ Grab the mouse and all the key events from libtcod and {events.post} them. """
+    key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS | tcod.event.MOUSE)
+    events.post(events.MOUSE, mouse)
     while key.vk != tcod.key.NONE:
         events.post(events.KEY, key)
         key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS)
 
 def main_loop(top, dialog=False):
-    quitting = False
-    while not quitting:
+    while True:
         top.render()
         tcod.flush()
 
         # Get the input...
-        get_keys()
+        get_input()
         if tcod.is_window_closed():
             events.post(events.QUIT)
 
         # ...and handle it:
         for event in events.generator():
             if event.type is events.QUIT:
-                quitting = True
-                # And repost the quit event to break out of all the loops.
+                # Repost the quit event to break out of all the loops.
                 events.post(events.QUIT)
+                return
             elif dialog and event.type in {events.OK, events.CANCEL}:
-                quitting = True
+                return
             elif event.type is events.LAUNCH:
                 event.data()
             else:
