@@ -54,36 +54,35 @@ def main_menu():
     slow_print(top, "Survival is a Hard problem", y=2)
 
     m = widgets.Menu(parent=top)
-    m.add_item("N", "New game")
-    m.add_item("L", "Load game", disabled=True)
+    m.add_item("n", "new game")
+    m.add_item("l", "load game", disabled=True)
     m.add_item("O", "Options", on_activate=lambda: events.post(events.LAUNCH, options_menu))
     m.add_item("M", "Mods", disabled=True)
-    m.add_item("Q", "Quit", on_activate=lambda: events.post(events.QUIT))
+    m.add_item("q", "quit", on_activate=lambda: events.post(events.QUIT))
     m.center_in_parent()
 
     main_loop(top)
 
 def options_menu():
-    cs = tcod.ColorSet()
-    cs.set_colors(1, tcod.color.LIME)
-
-    top = widgets.Dialog(width=50, height=30)
+    top = widgets.Dialog(width=55, height=30)
     top.center_in_console()
 
     title = widgets.Label(parent=top, x=2, text="Options")
 
     b = widgets.Button(parent=top, y=top.rect.height-1,
-                       label=cs.sprintf("%(1)c{Esc}%(0)c Cancel"),
+                       label="Cancel", shortcut="{Esc}",
                        key_trigger=lambda k: k.vk==tcod.key.ESCAPE,
-                       action=lambda: events.post(events.CANCEL),
-                       color_set=cs)
+                       action=lambda: events.post(events.CANCEL))
     b.rect.right = top.rect.width - 2
     b2 = widgets.Button(parent=top, y=top.rect.height-1,
-                        label=cs.sprintf("%(1)c{Enter}%(0)c OK"),
-                        key_trigger=lambda k: k.vk==tcod.key.ENTER,
-                        action=lambda: events.post(events.OK),
-                        color_set=cs)
+                        label="OK", shortcut="{Shift+Enter}",
+                        key_trigger=lambda k: k.shift and k.vk==tcod.key.ENTER,
+                        action=lambda: events.post(events.OK))
     b2.rect.right = b.rect.left - 1
+    b3 = widgets.Button(parent=top, y=top.rect.height-1,
+                        label="Apply", shortcut="{Enter}",
+                        key_trigger=lambda k: k.vk==tcod.key.ENTER)
+    b3.rect.right = b2.rect.left - 1
 
     options = widgets.List(parent=top, x=1, y=1, width=20, height=28)
     options.add_item("Window width: %d" % config.parser.getint("core", "width"))

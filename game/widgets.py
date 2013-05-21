@@ -155,15 +155,20 @@ class Label(Widget):
 
         super(Label, self).render()
 
+button_cs = tcod.ColorSet()
+button_cs.set_colors(1, fgcolor=tcod.color.LIME)
+
 class Button(Widget):
-    def __init__(self, label, parent=None, console=None, x=0, y=0, width=0,
+    def __init__(self, shortcut, label, parent=None, console=None, x=0, y=0, width=0,
                  key_trigger=None, action=None, color_set=None):
         super(Button, self).__init__(parent, console, x, y, width, height=1, color_set=color_set)
         self.key_trigger = key_trigger
         self.action = action
-        self.shortcut_fgcolor = tcod.color.LIME
+        if self.color_set is None:
+            self.color_set = button_cs
 
-        self.label = Label(parent=self, x=1, text=label)
+        label_text = self.color_set.sprintf("%(1)c" + shortcut + "%(0)c " + label)
+        self.label = Label(parent=self, x=1, text=label_text)
         if self.rect.width < 1:
             self.rect.resize(width=self.label.rect.width)
         elif self.rect.width < self.label.rect.width:
@@ -172,8 +177,7 @@ class Button(Widget):
             self.label.center_in_parent()
 
     def render(self):
-        if self.color_set is not None:
-            self.color_set.apply()
+        self.color_set.apply()
 
         self.console.set_default_background(self.bgcolor)
         origin = self.point_to_screen(utils.origin)
