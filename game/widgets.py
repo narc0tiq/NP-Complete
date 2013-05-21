@@ -27,12 +27,13 @@ class Widget(object):
     in which case, they are console-relative).
     """
 
-    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0):
+    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
         self.parent = parent
         self.children = []
         self.console = console
         self.fgcolor = tcod.color.WHITE
         self.bgcolor = tcod.color.BLACK
+        self.color_set = color_set
 
         if self.parent is not None:
             if self.console is None:
@@ -111,8 +112,8 @@ class Image(Widget):
         super(Image, self).render()
 
 class Label(Widget):
-    def __init__(self, parent=None, console=None, x=0, y=0, text="", width=0):
-        super(Label, self).__init__(parent, console, x, y, width, height=0)
+    def __init__(self, parent=None, console=None, x=0, y=0, text="", width=0, color_set=None):
+        super(Label, self).__init__(parent, console, x, y, width, height=0, color_set=color_set)
         self.max_width = width
         self._text = text
         self.align = tcod.align.LEFT
@@ -130,14 +131,21 @@ class Label(Widget):
         self.calc_size()
 
     def calc_size(self):
+        text = self._text
+        if self.color_set is not None:
+            text = self.color_set.strip(self._text)
+
         width = self.rect.width
         if self.max_width < 1:
-            width = min(len(self._text), self.console.width - self.rect.left)
+            width = min(len(text), self.console.width - self.rect.left)
         height = self.console.get_height_rect(self.rect.left, self.rect.top,
                                               width, text=self._text)
         self.rect.resize(width=width, height=height)
 
     def render(self):
+        if self.color_set is not None:
+            self.color_set.apply()
+
         x,y = self.point_to_screen(utils.origin)
 
         self.console.set_default_foreground(self.fgcolor)
@@ -148,13 +156,14 @@ class Label(Widget):
         super(Label, self).render()
 
 class Button(Widget):
-    def __init__(self, shortcut_text, label, parent=None, console=None, x=0, y=0, width=0, key_trigger=None, action=None):
-        super(Button, self).__init__(parent, console, x, y, width, height=1)
+    def __init__(self, label, parent=None, console=None, x=0, y=0, width=0,
+                 key_trigger=None, action=None, color_set=None):
+        super(Button, self).__init__(parent, console, x, y, width, height=1, color_set=color_set)
         self.key_trigger = key_trigger
         self.action = action
         self.shortcut_fgcolor = tcod.color.LIME
 
-        self.label = Label(parent=self, text=" %s %s " % (shortcut_text, label))
+        self.label = Label(parent=self, x=1, text=label)
         if self.rect.width < 1:
             self.rect.resize(width=self.label.rect.width)
         elif self.rect.width < self.label.rect.width:
@@ -162,10 +171,10 @@ class Button(Widget):
         else:
             self.label.center_in_parent()
 
-        self.shortcut = Label(parent=self, text=shortcut_text, x=self.label.rect.left+1)
-        self.shortcut.fgcolor = tcod.color.LIME
-
     def render(self):
+        if self.color_set is not None:
+            self.color_set.apply()
+
         self.console.set_default_background(self.bgcolor)
         origin = self.point_to_screen(utils.origin)
         self.console.rect(origin.x, origin.y, width=self.rect.width, height=1)
@@ -187,8 +196,8 @@ class Button(Widget):
 ListItem = collections.namedtuple("ListItem", ["label", "disabled", "on_activate"])
 
 class List(Widget):
-    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0):
-        super(List, self).__init__(parent, console, x, y, 0, 0)
+    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
+        super(List, self).__init__(parent, console, x, y, 0, 0, color_set=color_set)
         self.init_width = max(0, width-1) # leave 1 character of width for the scrollbar, if fixed-width
         self.init_height = height
         self.items = []
@@ -226,10 +235,14 @@ class List(Widget):
                                                          self.init_width,
                                                          text=item.label)
 
+        label_text = item.label
+        if self.color_set is not None:
+            label_text = self.color_set.strip(item.label)
+
         if self.init_width > 0:
             self.rect.width = self.init_width
-        elif len(item.label) > self.rect.width:
-            self.rect.width = len(item.label)
+        elif len(label_text) > self.rect.width:
+            self.rect.width = len(label_text)
 
     def recalc_size(self):
         """ Call this if you edited self.items without using self.add_item() """
@@ -260,6 +273,9 @@ class List(Widget):
         re-created; self.add_item() and self.recalc_size() will refuse to
         operate.
         """
+        if self.color_set is not None:
+            self.color_set.apply()
+
         if self.sub_console is None:
             self.sub_console = tcod.Console(self.rect.width, self.rect.height)
 
@@ -347,6 +363,11 @@ class Menu(Dialog):
             self.rect.width = self.list.rect.width + 2
         if self.init_height < 1:
             self.rect.height = self.list.rect.height + 2
+
+    def render(self):
+        if self.color_set is not None:
+            self.color_set.apply()
+        super(Menu, self).render()
 
     def render_item(self, console, item, x, y, width, height):
         console.set_default_foreground(self.shortcut_fgcolor)

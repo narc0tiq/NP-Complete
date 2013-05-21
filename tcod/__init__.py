@@ -216,6 +216,65 @@ class ImageFile(Image):
         self.image_id = libtcod.image_load(path)
         self.width, self.height = self.get_size()
 
+class ColorSet(object):
+    """
+    Defines five color pairs to be used to change colors in mid-string -- see
+    http://doryen.eptalys.net/data/libtcod/doc/1.5.1/html2/console_print.html?py=true#9
+    for the underlying mechanism.
+
+    Usage involves:
+        >>> cs = tcod.ColorSet()
+        >>> cs.set_colors(1, fgcolor=tcod.color.RED)
+        >>> cs.set_colors(2, bgcolor=tcod.color.AZURE)
+        >>> s = "Text with a %(1)cred%(0)c word and an %(2)cazure-background%(0) word."
+        >>> fmt_s = cs.sprintf(s)
+        >>> cs.apply()
+
+    The resulting fmt_s can now be used in a Console.print*(); note that
+    cs.apply() is required for defining the color set in the console -- it is
+    not a bad idea to save it until just before printing the string. Note also
+    that len(fmt_s) is four characters longer than the printed string -- use
+    with caution.
+    """
+    def __init__(self):
+        self.chars = {'0': libtcod.COLCTRL_STOP, '1': libtcod.COLCTRL_1, '2': libtcod.COLCTRL_2,
+                      '3': libtcod.COLCTRL_3, '4': libtcod.COLCTRL_4, '5': libtcod.COLCTRL_5}
+        self.colors = {libtcod.COLCTRL_1: (libtcod.white, libtcod.black),
+                       libtcod.COLCTRL_2: (libtcod.white, libtcod.black),
+                       libtcod.COLCTRL_3: (libtcod.white, libtcod.black),
+                       libtcod.COLCTRL_4: (libtcod.white, libtcod.black),
+                       libtcod.COLCTRL_5: (libtcod.white, libtcod.black)}
+
+    def set_colors(self, pair_id, fgcolor=libtcod.white, bgcolor=libtcod.black):
+        """
+        Sets the color pair pair_id (1-5) to the desired colors. Note that an
+        invalid pair_id will be treated as pair_id 1.
+        """
+        if not(1 <= pair_id <= 5):
+            pair_id = 1
+        pair = self.chars[str(pair_id)]
+
+        self.colors[pair] = (fgcolor, bgcolor)
+
+    def sprintf(self, string):
+        """
+        Pass in a string using %(1)c to %(5)c for the five color pairs. Use
+        %(0)c to reset to console default colors.
+        """
+        return string % self.chars
+
+    def strip(self, string):
+        """ Gives you string with the color control characters removed. """
+        return string.translate(None, ''.join(self.chars.values()))
+
+    def apply(self):
+        """
+        Call this before rendering a string that wants to use the color pairs
+        defined in this ColorSet.
+        """
+        for color_code, colors in self.colors.iteritems():
+            libtcod.console_set_color_control(color_code, colors[0], colors[1])
+
 # Useful constants
 class background(object):
     NONE = libtcod.BKGND_NONE

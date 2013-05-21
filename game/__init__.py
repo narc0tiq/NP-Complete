@@ -64,19 +64,25 @@ def main_menu():
     main_loop(top)
 
 def options_menu():
+    cs = tcod.ColorSet()
+    cs.set_colors(1, tcod.color.LIME)
+
     top = widgets.Dialog(width=50, height=30)
     top.center_in_console()
 
     title = widgets.Label(parent=top, x=2, text="Options")
+
     b = widgets.Button(parent=top, y=top.rect.height-1,
-                       shortcut_text="{Esc}", label="Cancel",
+                       label=cs.sprintf("%(1)c{Esc}%(0)c Cancel"),
                        key_trigger=lambda k: k.vk==tcod.key.ESCAPE,
-                       action=lambda: events.post(events.CANCEL))
+                       action=lambda: events.post(events.CANCEL),
+                       color_set=cs)
     b.rect.right = top.rect.width - 2
     b2 = widgets.Button(parent=top, y=top.rect.height-1,
-                        shortcut_text="{Enter}", label="OK",
+                        label=cs.sprintf("%(1)c{Enter}%(0)c OK"),
                         key_trigger=lambda k: k.vk==tcod.key.ENTER,
-                        action=lambda: events.post(events.OK))
+                        action=lambda: events.post(events.OK),
+                        color_set=cs)
     b2.rect.right = b.rect.left - 1
 
     options = widgets.List(parent=top, x=1, y=1, width=20, height=28)
