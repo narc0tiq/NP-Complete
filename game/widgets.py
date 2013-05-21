@@ -197,7 +197,11 @@ class Button(Widget):
 
         super(Button, self).handle_event(ev)
 
-ListItem = collections.namedtuple("ListItem", ["label", "disabled", "on_activate"])
+class ListItem(object):
+    def __init__(self, label, disabled=False, on_activate=None):
+        self.label = label
+        self.disabled = disabled
+        self.on_activate = on_activate
 
 class List(Widget):
     def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
