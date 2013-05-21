@@ -204,7 +204,6 @@ class List(Widget):
         self.selected_item = None
         self.sub_console = None
         self.scroll_y = 0
-        self.render_item_override = None
         self.selected_bgcolor = tcod.color.AZURE
         self.disabled_fgcolor = tcod.color.DARK_GREY
 
@@ -303,8 +302,6 @@ class List(Widget):
                 self.sub_console.set_default_foreground(self.fgcolor)
 
             self.sub_console.print_rect_ex(0, y, text=i.label)
-            if self.render_item_override:
-                self.render_item_override(self.sub_console, i, 0, y, self.rect.width, height)
             y += height
 
         self.sub_console.blit(0, self.scroll_y,
@@ -336,20 +333,33 @@ class Dialog(Widget):
         self.console.print_frame(self.rect.left, self.rect.top, self.rect.width, self.rect.height)
         super(Dialog, self).render()
 
+menu_cs = tcod.ColorSet()
+menu_cs.set_colors(1, fgcolor=tcod.color.LIME)
+menu_cs.set_colors(2, fgcolor=tcod.color.LIGHT_GREY)
+
 class Menu(Dialog):
-    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0):
+    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
         super(Menu, self).__init__(parent, console, x, y, width, height)
         self.init_width = width
         self.init_height = height
         self.list = List(parent=self, x=x+1, y=y+1, width=max(0, width-2), height=max(0, height-2))
-        self.list.render_item_override = self.render_item
         self.keys = {}
-        self.shortcut_fgcolor = tcod.color.LIME
-        self.disabled_shortcut_fgcolor = tcod.color.LIGHT_GREY
+        self.color_set = color_set
+        if self.color_set is None:
+            self.color_set = menu_cs
 
     def add_item(self, key, label, disabled=False, on_activate=None):
-        label = key + " " + label
-        item = self.list.add_item(label, disabled, on_activate)
+        parts = label.partition(key)
+        if parts[1] == '':
+            parts = (label + ' (', key, ')')
+
+        color_part = '%(1)c'
+        if disabled:
+            color_part = '%(2)c'
+
+        label_text = self.color_set.sprintf(''.join((parts[0], color_part, parts[1], '%(0)c', parts[2])))
+
+        item = self.list.add_item(label_text, disabled, on_activate)
         self.calc_size()
         self.keys[key] = item
         return item
@@ -365,16 +375,8 @@ class Menu(Dialog):
             self.rect.height = self.list.rect.height + 2
 
     def render(self):
-        if self.color_set is not None:
-            self.color_set.apply()
+        self.color_set.apply()
         super(Menu, self).render()
-
-    def render_item(self, console, item, x, y, width, height):
-        console.set_default_foreground(self.shortcut_fgcolor)
-        if item.disabled:
-            console.set_default_foreground(self.disabled_shortcut_fgcolor)
-        console.put_char(x, y, item.label[0])
-        console.set_default_foreground(self.fgcolor)
 
     def handle_event(self, ev):
         if ev.type == events.KEY and chr(ev.data.c) in self.keys:

@@ -54,11 +54,11 @@ def main_menu():
     slow_print(top, "Survival is a Hard problem", y=2)
 
     m = widgets.Menu(parent=top)
-    m.add_item("n", "New game")
-    m.add_item("l", "Load game", disabled=True)
-    m.add_item("o", "Options", on_activate=lambda: events.post(events.LAUNCH, options_menu))
-    m.add_item("m", "Mods", disabled=True)
-    m.add_item("q", "Quit", on_activate=lambda: events.post(events.QUIT))
+    m.add_item("N", "New game")
+    m.add_item("L", "Load game", disabled=True)
+    m.add_item("O", "Options", on_activate=lambda: events.post(events.LAUNCH, options_menu))
+    m.add_item("M", "Mods", disabled=True)
+    m.add_item("Q", "Quit", on_activate=lambda: events.post(events.QUIT))
     m.center_in_parent()
 
     main_loop(top)
