@@ -14,6 +14,11 @@ def slow_print(widget, text, y=1):
 
         widget.render()
         tcod.flush() # Relying on the tcod.set_fps_limit() from earlier to limit our render rate
+        key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS | tcod.event.MOUSE_PRESS)
+        if key.vk != tcod.key.NONE or mouse.lbutton or mouse.rbutton:
+            label.text = text
+            widget.render()
+            return
 
 def get_input():
     """ Grab the mouse and all the key events from libtcod and {events.post} them. """
