@@ -79,7 +79,7 @@ class Console(object):
     # Root console has id 0
     ROOT_ID = 0
 
-    def __init__(self, width=0, height=0, console_id=None):
+    def __init__(self, width=20, height=10, console_id=None):
         if console_id is None:
             self.console_id = libtcod.console_new(width, height)
             self.width = width
@@ -89,12 +89,44 @@ class Console(object):
             self.width = libtcod.console_get_width(console_id)
             self.height = libtcod.console_get_height(console_id)
 
-    def __del__(self):
-        if self.console_id != self.ROOT_ID: # Root console cannot be console_delete()d
+    def close(self):
+        if self.console_id != Console.ROOT_ID: # Root console cannot be console_delete()d
             libtcod.console_delete(self.console_id)
 
+    def __del__(self):
+        self.close()
+
+    def grow(self, width=None, height=None):
+        """ Grow the console to at least width*height. Uses self.resize() """
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+
+        if self.height >= height and self.width >= width:
+            return # No resize needed.
+
+        self.resize(width, height)
+
+    def resize(self, width=None, height=None):
+        """ Resize a console by destroying and recreating it """
+        if self.console_id == Console.ROOT_ID:
+            raise AttributeError("The root console cannot be resized!")
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+
+        if self.height == height and self.width == width:
+            return # No resize needed.
+
+        libtcod.console_delete(self.console_id)
+        self.console_id = libtcod.console_new(width, height)
+        self.width = width
+        self.height = height
+
     def __getstate__(self):
-        if self.console_id == self.ROOT_ID:
+        if self.console_id == Console.ROOT_ID:
             return {}
         return {'width': self.width, 'height': self.height}
 
@@ -112,7 +144,7 @@ class Console(object):
         if src_height is None:
             src_height = self.height
 
-        dest_id = self.ROOT_ID
+        dest_id = Console.ROOT_ID
         if dest_console is not None:
             dest_id = dest_console.console_id
 
@@ -237,19 +269,28 @@ class ColorSet(object):
     with caution.
     """
     def __init__(self):
+        self.fgcolor = libtcod.white
+        self.bgcolor = libtcod.black
         self.chars = {'0': libtcod.COLCTRL_STOP, '1': libtcod.COLCTRL_1, '2': libtcod.COLCTRL_2,
                       '3': libtcod.COLCTRL_3, '4': libtcod.COLCTRL_4, '5': libtcod.COLCTRL_5}
-        self.colors = {libtcod.COLCTRL_1: (libtcod.white, libtcod.black),
-                       libtcod.COLCTRL_2: (libtcod.white, libtcod.black),
-                       libtcod.COLCTRL_3: (libtcod.white, libtcod.black),
-                       libtcod.COLCTRL_4: (libtcod.white, libtcod.black),
-                       libtcod.COLCTRL_5: (libtcod.white, libtcod.black)}
+        self.colors = {libtcod.COLCTRL_1: (None, None),
+                       libtcod.COLCTRL_2: (None, None),
+                       libtcod.COLCTRL_3: (None, None),
+                       libtcod.COLCTRL_4: (None, None),
+                       libtcod.COLCTRL_5: (None, None)}
 
-    def set_colors(self, pair_id, fgcolor=libtcod.white, bgcolor=libtcod.black):
+    def set_colors(self, pair_id, fgcolor=None, bgcolor=None):
         """
-        Sets the color pair pair_id (1-5) to the desired colors. Note that an
-        invalid pair_id will be treated as pair_id 1.
+        Sets the color pair pair_id (0-5) to the desired colors. Note that an
+        invalid pair_id will be treated as pair_id 1. pair_id 0 sets the default
+        colors, which will be used to fill in {None}s in other color pairs when
+        self.apply() is called.
         """
+        if pair_id == 0:
+            self.fgcolor = fgcolor
+            self.bgcolor = bgcolor
+            return
+
         if not(1 <= pair_id <= 5):
             pair_id = 1
         pair = self.chars[str(pair_id)]
@@ -265,7 +306,7 @@ class ColorSet(object):
 
     def strip(self, string):
         """ Gives you string with the color control characters removed. """
-        return string.translate(None, ''.join(self.chars.values()))
+        return string.translate(None, ''.join([chr(x) for x in self.chars.values()]))
 
     def apply(self):
         """
@@ -273,7 +314,12 @@ class ColorSet(object):
         defined in this ColorSet.
         """
         for color_code, colors in self.colors.iteritems():
-            libtcod.console_set_color_control(color_code, colors[0], colors[1])
+            fgcolor, bgcolor = colors
+            if fgcolor is None:
+                fgcolor = self.fgcolor
+            if bgcolor is None:
+                bgcolor = self.bgcolor
+            libtcod.console_set_color_control(color_code, fgcolor, bgcolor)
 
 # Useful constants
 class background(object):

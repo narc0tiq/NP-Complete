@@ -29,7 +29,8 @@ class Widget(object):
 
     def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
         self.parent = parent
-        self.children = []
+        self.child_dict = collections.OrderedDict()
+        self.children = self.child_dict.viewkeys()
         self.console = console
         self.fgcolor = tcod.color.WHITE
         self.bgcolor = tcod.color.BLACK
@@ -47,7 +48,7 @@ class Widget(object):
 
     def register_child(self, child):
         child.parent = self
-        self.children.append(child)
+        self.child_dict[child] = None
 
     def point_to_screen(self, point):
         """ Translates a Point(x,y) inside this widget into screen coordinates """
@@ -144,6 +145,7 @@ class Label(Widget):
 
     def render(self):
         if self.color_set is not None:
+            self.color_set.set_colors(0, self.fgcolor, self.bgcolor)
             self.color_set.apply()
 
         x,y = self.point_to_screen(utils.origin)
@@ -197,40 +199,45 @@ class Button(Widget):
 
         super(Button, self).handle_event(ev)
 
-class ListItem(object):
-    def __init__(self, label, disabled=False, on_activate=None):
-        self.label = label
+class ListItem(Label):
+    def __init__(self, parent, label, disabled=False, on_activate=None):
+        pos = parent.next_item_pos()
+        width = parent.max_width
+        super(ListItem, self).__init__(parent, parent.sub_console,
+                                       x=pos.x, y=pos.y, width=width,
+                                       text=label, color_set=parent.color_set)
+
         self.disabled = disabled
         self.on_activate = on_activate
+
+    def point_to_screen(self, point):
+        x = point.x + self.rect.left
+        y = point.y + self.rect.top
+
+        return utils.Point(x,y)
 
 class List(Widget):
     def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
         super(List, self).__init__(parent, console, x, y, 0, 0, color_set=color_set)
-        self.init_width = max(0, width-1) # leave 1 character of width for the scrollbar, if fixed-width
-        self.init_height = height
-        self.items = []
+        self.max_width = max(0, width-1) # leave 1 character of width for the scrollbar, if fixed-width
+        self.max_height = height
         self.selected_item = None
-        self.sub_console = None
+        self.sub_console = tcod.Console(max(self.max_width, 20), max(self.max_height, 10))
         self.scroll_y = 0
         self.selected_bgcolor = tcod.color.AZURE
         self.disabled_fgcolor = tcod.color.DARK_GREY
 
     def add_item(self, label, disabled=False, on_activate=None):
-        """
-        Warning: Trying to add_item() after the list has been rendered is
-        currently unsupported.
-        """
-        if self.sub_console is not None:
-            raise AttributeError("Trying to add items to a list after offscreen surface created.")
+        li = ListItem(parent=self, label=label, disabled=disabled, on_activate=on_activate)
 
-        li = ListItem(label, disabled, on_activate)
-
-        self.items.append(li)
         if self.selected_item is None and not li.disabled:
             self.selected_item = li
 
         self._calc_size(li)
         return li
+
+    def next_item_pos(self):
+        return utils.Point(0, self.rect.height)
 
     def _calc_size(self, item):
         """
@@ -238,79 +245,56 @@ class List(Widget):
         the given item. self.add_item() will automatically call this, as will
         self.recalc_size().
         """
-        self.rect.height += self.console.get_height_rect(self.rect.left, self.rect.top,
-                                                         self.init_width,
-                                                         text=item.label)
+        self.rect.height += item.rect.height
 
-        label_text = item.label
-        if self.color_set is not None:
-            label_text = self.color_set.strip(item.label)
-
-        if self.init_width > 0:
-            self.rect.width = self.init_width
-        elif len(label_text) > self.rect.width:
-            self.rect.width = len(label_text)
+        if self.max_width > 0:
+            self.rect.width = self.max_width
+        elif item.rect.width > self.rect.width:
+            self.rect.width = item.rect.width
 
     def recalc_size(self):
-        """ Call this if you edited self.items without using self.add_item() """
-        if self.sub_console is not None:
-            raise AttributeError("Trying to resize list after offscreen surface created.")
-
+        """ Call this if you registered children without using self.add_item() """
         self.rect.resize(0, 0)
         for item in self.items:
             self._calc_size(item)
-
 
     def scroll_by(self, amount):
         self.scroll_y += amount
 
     def scroll_to(self, y, height=1):
-        if self.init_height < 1:
+        if self.max_height < 1:
             return # Nothing to do for variable height lists.
 
-        scroll_bottom = self.scroll_y + self.init_height
+        scroll_bottom = self.scroll_y + self.max_height
         if y < self.scroll_y: # scroll up
             self.scroll_by(y - self.scroll_y)
         elif y+height > scroll_bottom: # scroll down
             self.scroll_by(y+height - scroll_bottom)
 
     def render(self):
-        """
-        Note that the first render creates an offscreen surface, which is never
-        re-created; self.add_item() and self.recalc_size() will refuse to
-        operate.
-        """
         if self.color_set is not None:
             self.color_set.apply()
 
-        if self.sub_console is None:
-            self.sub_console = tcod.Console(self.rect.width, self.rect.height)
+        self.sub_console.grow(self.rect.width, self.rect.height)
 
-        draw_width = self.init_width+1 if self.init_width > 0 else self.rect.width
-        draw_height = self.init_height if self.init_height > 0 else self.rect.height
+        draw_width = self.max_width+1 if self.max_width > 0 else self.rect.width
+        draw_height = self.max_height if self.max_height > 0 else self.rect.height
 
         origin = self.point_to_screen(utils.origin)
         self.console.rect(origin.x, origin.y, draw_width, draw_height, clear=True)
 
-        y = 0
-        for i in self.items:
-            height = self.sub_console.get_height_rect(0, y, text=i.label)
+        for child in self.children:
+            child.bgcolor = self.bgcolor
+            if self.selected_item is child:
+                child.bgcolor = self.selected_bgcolor
+                self.scroll_to(child.rect.top, child.rect.height)
 
-            bgcolor = self.bgcolor
-            if self.selected_item is i:
-                bgcolor = self.selected_bgcolor
-                self.scroll_to(y, height)
-            self.sub_console.set_default_background(bgcolor)
-            self.sub_console.rect(0, y, self.rect.width, height, clear=True)
-            self.sub_console.set_default_background(self.bgcolor)
-
-            if i.disabled:
-                self.sub_console.set_default_foreground(self.disabled_fgcolor)
+            if child.disabled:
+                child.fgcolor = self.disabled_fgcolor
             else:
-                self.sub_console.set_default_foreground(self.fgcolor)
+                child.fgcolor = self.fgcolor
 
-            self.sub_console.print_rect_ex(0, y, text=i.label)
-            y += height
+            child.render()
 
         self.sub_console.blit(0, self.scroll_y,
                               draw_width, draw_height,
@@ -318,12 +302,13 @@ class List(Widget):
 
     def handle_event(self, ev):
         if ev.type == events.KEY:
-            selected_index = self.items.index(self.selected_item)
-            if ev.data.vk == tcod.key.DOWN and (selected_index+1) < len(self.items):
-                self.selected_item = self.items[selected_index + 1]
-                return True
-            elif ev.data.vk == tcod.key.UP and selected_index > 0:
-                self.selected_item = self.items[selected_index - 1]
+            if ev.data.vk in (tcod.key.DOWN, tcod.key.UP):
+                children = list(self.children)
+                selected_index = children.index(self.selected_item)
+                if ev.data.vk == tcod.key.DOWN and (selected_index+1) < len(self.children):
+                    self.selected_item = children[selected_index + 1]
+                elif ev.data.vk == tcod.key.UP and selected_index > 0:
+                    self.selected_item = children[selected_index - 1]
                 return True
             elif ev.data.vk == tcod.key.ENTER and self.selected_item.on_activate:
                 self.selected_item.on_activate()
@@ -348,13 +333,14 @@ menu_cs.set_colors(2, fgcolor=tcod.color.LIGHT_GREY)
 class Menu(Dialog):
     def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
         super(Menu, self).__init__(parent, console, x, y, width, height)
-        self.init_width = width
-        self.init_height = height
+        self.max_width = width
+        self.max_height = height
         self.list = List(parent=self, x=x+1, y=y+1, width=max(0, width-2), height=max(0, height-2))
         self.keys = {}
         self.color_set = color_set
         if self.color_set is None:
             self.color_set = menu_cs
+        self.list.color_set = self.color_set
 
     def add_item(self, key, label, disabled=False, on_activate=None):
         parts = label.partition(key)
@@ -377,9 +363,9 @@ class Menu(Dialog):
         return self.list.selected_item
 
     def calc_size(self):
-        if self.init_width < 1:
+        if self.max_width < 1:
             self.rect.width = self.list.rect.width + 2
-        if self.init_height < 1:
+        if self.max_height < 1:
             self.rect.height = self.list.rect.height + 2
 
     def render(self):
