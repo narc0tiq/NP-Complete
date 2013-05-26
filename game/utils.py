@@ -70,3 +70,8 @@ class Rect(object):
         return (self.left <= point.x < self.right and
                 self.top <= point.y < self.bottom)
 
+    def __str__(self):
+        return "Rect: (%d, %d)->(%d, %d)" % (self.left, self.top, self.right, self.bottom)
+
+    def __repr__(self):
+        return "Rect(x=%d, y=%d, width=%d, height=%d)" % (self.left, self.top, self.width, self.height)
