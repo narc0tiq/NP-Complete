@@ -1,10 +1,53 @@
 import ConfigParser, os, atexit
 from datetime import datetime as dt
 
+import tcod
+from game import events
+
 parser = ConfigParser.SafeConfigParser()
 with open("data/defaults.cfg") as f:
     parser.readfp(f)
 parser.read(["data/config.cfg", os.path.expanduser("~/.NP-Complete/data/config.cfg")])
+
+def int_option_formatter(label, section, option):
+    def formatter():
+        value = parser.getint(section, option)
+        s = '%s:%%(1)c%d%%(0)c' % (label, value)
+        return tcod.color_set_empty.sprintf(s)
+    return formatter
+
+def boolean_option_formatter(label, section, option):
+    def formatter():
+        value = parser.getboolean(section, option)
+        s = '%s:%%(1)c%s%%(0)c' % (label, "Enabled" if value else "Disabled")
+        return tcod.color_set_empty.sprintf(s)
+    return formatter
+
+def int_option_handler(section, option, minimum=None, maximum=None):
+    def handler(event):
+        if event.type is events.KEY and event.data.vk in (tcod.key.LEFT, tcod.key.RIGHT):
+            value = parser.getint(section, option)
+            if event.data.vk == tcod.key.LEFT and (minimum is None or value >= minimum):
+                value -= 1
+            elif event.data.vk == tcod.key.RIGHT and (maximum is None or value <= maximum):
+                value += 1
+            parser.set(section, option, str(value))
+            return True
+        return False
+    return handler
+
+def boolean_option_handler(section, option):
+    def handler(event):
+        if event.type is events.KEY and event.data.vk in (tcod.key.TAB, tcod.key.LEFT, tcod.key.RIGHT):
+            value = True
+            if event.data.vk == tcod.key.TAB:
+                value = not parser.getboolean(section, option)
+            elif event.data.vk == tcod.key.LEFT:
+                value = False
+            parser.set(section, option, "yes" if value else "no")
+            return True
+        return False
+    return handler
 
 @atexit.register
 def save():

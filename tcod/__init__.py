@@ -90,7 +90,7 @@ class Console(object):
             self.height = libtcod.console_get_height(console_id)
 
     def close(self):
-        if self.console_id != Console.ROOT_ID: # Root console cannot be console_delete()d
+        if self.console_id != self.ROOT_ID: # Root console cannot be console_delete()d
             libtcod.console_delete(self.console_id)
 
     def __del__(self):
@@ -110,7 +110,7 @@ class Console(object):
 
     def resize(self, width=None, height=None):
         """ Resize a console by destroying and recreating it """
-        if self.console_id == Console.ROOT_ID:
+        if self.console_id == self.ROOT_ID:
             raise AttributeError("The root console cannot be resized!")
         if width is None:
             width = self.width
@@ -126,7 +126,7 @@ class Console(object):
         self.height = height
 
     def __getstate__(self):
-        if self.console_id == Console.ROOT_ID:
+        if self.console_id == self.ROOT_ID:
             return {}
         return {'width': self.width, 'height': self.height}
 
@@ -144,7 +144,7 @@ class Console(object):
         if src_height is None:
             src_height = self.height
 
-        dest_id = Console.ROOT_ID
+        dest_id = self.ROOT_ID
         if dest_console is not None:
             dest_id = dest_console.console_id
 
@@ -320,6 +320,8 @@ class ColorSet(object):
             if bgcolor is None:
                 bgcolor = self.bgcolor
             libtcod.console_set_color_control(color_code, fgcolor, bgcolor)
+
+color_set_empty = ColorSet()
 
 # Useful constants
 class background(object):
