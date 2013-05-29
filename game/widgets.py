@@ -27,7 +27,7 @@ class Widget(object):
     in which case, they are console-relative).
     """
 
-    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None):
+    def __init__(self, parent=None, console=None, x=0, y=0, width=0, height=0, color_set=None, handlers=None):
         self.parent = parent
         self.child_dict = collections.OrderedDict()
         self.children = self.child_dict.viewkeys()
@@ -35,8 +35,11 @@ class Widget(object):
         self.fgcolor = tcod.color.WHITE
         self.bgcolor = tcod.color.BLACK
         self.color_set = color_set
+        self.handlers = handlers
+        if self.handlers is None:
+            self.handlers = {}
 
-        if self.parent is not None:
+        if self.parent:
             if self.console is None:
                 self.console = self.parent.console
             self.parent.register_child(self)
@@ -52,8 +55,10 @@ class Widget(object):
 
     def point_to_screen(self, point):
         """ Translates a Point(x,y) inside this widget into screen coordinates """
-        x = point.x + self.rect.left
-        y = point.y + self.rect.top
+        x, y = point
+
+        x += self.rect.left
+        y += self.rect.top
 
         if self.parent:
             return self.parent.point_to_screen(utils.Point(x,y))
@@ -133,7 +138,7 @@ class Label(Widget):
 
     def calc_size(self):
         text = self._text
-        if self.color_set is not None:
+        if self.color_set:
             text = self.color_set.strip(self._text)
 
         width = self.rect.width
@@ -144,7 +149,7 @@ class Label(Widget):
         self.rect.resize(width=width, height=height)
 
     def render(self):
-        if self.color_set is not None:
+        if self.color_set:
             self.color_set.set_colors(0, self.fgcolor, self.bgcolor)
             self.color_set.apply()
 
@@ -164,8 +169,8 @@ class Button(Widget):
     def __init__(self, shortcut, label, parent=None, console=None, x=0, y=0, width=0,
                  key_trigger=None, action=None, color_set=None):
         super(Button, self).__init__(parent, console, x, y, width, height=1, color_set=color_set)
-        self.key_trigger = key_trigger
-        self.action = action
+        self.handlers['key'] = key_trigger
+        self.handlers['activate'] = action
         if self.color_set is None:
             self.color_set = button_cs
 
@@ -192,24 +197,24 @@ class Button(Widget):
         self.console.put_char(origin.x + self.rect.width - 1, origin.y, ']')
 
     def handle_event(self, ev):
-        if(self.action is not None and ev.type is events.KEY and
-           self.key_trigger is not None and self.key_trigger(ev.data)):
-            self.action()
-            return True
+        if ev.type is events.KEY:
+            if 'key' in self.handlers and self.handlers['key'](ev.data):
+                if 'activate' in self.handlers:
+                    self.handlers['activate']()
+                    return True
 
         super(Button, self).handle_event(ev)
 
 class ListItem(Label):
     def __init__(self, parent, label, disabled=False, on_activate=None):
         self.disabled = disabled
-        self.on_activate = on_activate
-
         pos = parent.next_item_pos()
         width = parent.max_width
         super(ListItem, self).__init__(parent, parent.sub_console,
                                        x=pos.x, y=pos.y, width=width,
                                        text=label, color_set=parent.color_set)
 
+        self.handlers['activate'] = on_activate
 
     def point_to_screen(self, point):
         x = point.x + self.rect.left
@@ -223,8 +228,8 @@ class ListItem(Label):
 
     def handle_event(self, ev):
         if ev.type == events.KEY and ev.data.vk == tcod.key.ENTER:
-            if self.on_activate:
-                self.on_activate(self)
+            if 'activate' in self.handlers:
+                self.handlers['activate'](self)
             return True
 
         return super(ListItem, self).handle_event(ev)
@@ -240,14 +245,14 @@ options_cs.set_colors(1, fgcolor=tcod.color.LIME)
 class OptionsListItem(ListItem):
     def __init__(self, parent, on_label, on_event):
         super(OptionsListItem, self).__init__(parent, label=on_label())
-        self.on_label = on_label
-        self.on_event = on_event
+        self.handlers['dynamic_text'] = on_label
+        self.handlers['event'] = on_event
         if self.color_set is None:
             self.color_set = options_cs
 
     def handle_event(self, ev):
-        if self.on_event(ev):
-            self.text = self.on_label()
+        if self.handlers['event'](ev):
+            self.text = self.handlers['dynamic_text']()
             return True
 
         return super(OptionsListItem, self).handle_event(ev)
@@ -295,7 +300,7 @@ class List(Widget):
 
     def recalc_size(self):
         width = max([x.rect.width for x in self.children])
-        height = self.last_child.rect.bottom if self.last_child is not None else 0
+        height = self.last_child.rect.bottom if self.last_child else 0
         self.rect.resize(width, height)
 
     def scroll_by(self, amount):
@@ -308,7 +313,7 @@ class List(Widget):
         scroll_bottom = self.scroll_top + self.max_height
         if top < self.scroll_top: # scroll up
             self.scroll_by(top - self.scroll_top)
-        elif bottom is not None and bottom > scroll_bottom: # scroll down
+        elif bottom and bottom > scroll_bottom: # scroll down
             self.scroll_by(bottom - scroll_bottom)
 
     def render(self):
@@ -320,7 +325,7 @@ class List(Widget):
         draw_width = self.max_width+1 if self.max_width > 0 else self.rect.width
         draw_height = self.max_height if self.max_height > 0 else self.rect.height
 
-        if self.color_set is not None:
+        if self.color_set:
             self.color_set.apply()
 
         origin = self.point_to_screen(utils.origin)
@@ -346,7 +351,7 @@ class List(Widget):
                               self.console, origin.x, origin.y)
 
     def handle_event(self, ev):
-        if self.selected_item is not None:
+        if self.selected_item:
             if ev.type == events.KEY and ev.data.vk in (tcod.key.DOWN, tcod.key.UP):
                 children = list(self.children)
                 selected_index = children.index(self.selected_item)
