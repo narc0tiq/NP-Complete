@@ -1,5 +1,7 @@
 from collections import namedtuple
-import sys, time
+import sys, time, string
+
+import tcod
 
 Point = namedtuple('Point', ['x', 'y'])
 origin = Point(0, 0)
@@ -75,3 +77,50 @@ class Rect(object):
 
     def __repr__(self):
         return "Rect(x=%d, y=%d, width=%d, height=%d)" % (self.left, self.top, self.width, self.height)
+
+
+keys = {}
+
+def key_vk(vk):
+    return lambda k: not k.shift and k.vk == vk
+
+def key_vk_shift(vk):
+    return lambda k: k.shift and k.vk == vk
+
+def key_c(c):
+    return lambda k: k.c == ord(c)
+
+for name, vk in tcod.key.__dict__.items():
+    if name.startswith('_') or name == "CHAR":
+        continue
+    elif name == "CAPSLOCK":
+        name = "CLock"
+    elif name.startswith("KP"):
+        name = "KP" + name[2:].capitalize()
+    elif name == "LWIN":
+        name = "LWin"
+    elif name == "NUMLOCK":
+        name = "NLock"
+    elif name == "PAGEDOWN":
+        name = "PageDn"
+    elif name == "PAGEUP":
+        name = "PageUp"
+    elif name == "PRINTSCREEN":
+        name = "PrtScr"
+    elif name == "RWIN":
+        name = "RWin"
+    elif name == "SCROLLLOCK":
+        name = "SLock"
+    else:
+        name = name.capitalize()
+    keys[name] = key_vk(vk)
+    keys["Shift+"+name] = key_vk_shift(vk)
+
+for s in string.digits, string.letters, string.punctuation:
+    for ch in s:
+        keys[ch] = key_c(ch)
+
+def key_name(key):
+    for name, check in keys.iteritems():
+        if check(key):
+            return name
