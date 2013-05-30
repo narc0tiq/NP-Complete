@@ -78,8 +78,8 @@ class Rect(object):
     def __repr__(self):
         return "Rect(x=%d, y=%d, width=%d, height=%d)" % (self.left, self.top, self.width, self.height)
 
-
-keys = {}
+vkeys = {}
+chars = {}
 
 def key_vk(vk):
     return lambda k: not k.shift and k.vk == vk
@@ -95,6 +95,10 @@ for name, vk in tcod.key.__dict__.items():
         continue
     elif name == "CAPSLOCK":
         name = "CLock"
+    elif name == "ESCAPE":
+        name = "Esc"
+    elif len(name) == 2 and name.startswith("K"):
+        continue
     elif name.startswith("KP"):
         name = "KP" + name[2:].capitalize()
     elif name == "LWIN":
@@ -111,16 +115,27 @@ for name, vk in tcod.key.__dict__.items():
         name = "RWin"
     elif name == "SCROLLLOCK":
         name = "SLock"
+    elif name == "SHIFT":
+        continue
     else:
         name = name.capitalize()
-    keys[name] = key_vk(vk)
-    keys["Shift+"+name] = key_vk_shift(vk)
+    vkeys[name] = key_vk(vk)
+    vkeys["Shift+"+name] = key_vk_shift(vk)
 
 for s in string.digits, string.letters, string.punctuation:
     for ch in s:
-        keys[ch] = key_c(ch)
+        chars[ch] = key_c(ch)
 
-def key_name(key):
-    for name, check in keys.iteritems():
+def key_check(name):
+    if vkeys[name]:
+        return vkeys[name]
+    elif chars[name]:
+        return chars[name]
+
+def name_key(key):
+    for name, check in vkeys.iteritems():
+        if check(key):
+            return name
+    for name, check in chars.iteritems():
         if check(key):
             return name

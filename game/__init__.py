@@ -1,5 +1,5 @@
 """ Core functions and classes for a libtcod game. Not game-specific. """
-import time
+import time, types
 
 import tcod
 from game import config, events, widgets
@@ -62,11 +62,36 @@ def main_menu():
     m.add_item("n", "new game")
     m.add_item("l", "load game", disabled=True)
     m.add_item("O", "Options", on_activate=lambda w: events.post(events.LAUNCH, options_menu))
+    m.add_item("k", "keybind testing", on_activate=lambda w: events.post(events.LAUNCH, keybind_dialog))
     m.add_item("M", "Mods", disabled=True)
     m.add_item("q", "quit", on_activate=lambda w: events.post(events.QUIT))
     m.center_in_parent()
 
     main_loop(top)
+
+def keybind_dialog():
+    top = widgets.Dialog(width=40, height=3)
+    top.center_in_console()
+
+    title = widgets.Label(parent=top, x=2, text="Keybind Testing")
+
+    l = widgets.Label(parent=top, x=1, y=1, text="Press a key...", width=38)
+    def label_event(self, ev):
+        if ev.type == events.KEY and not utils.key_check("Esc")(ev.data):
+            name = utils.name_key(ev.data)
+            print name
+            if name is not None:
+                self.text = name
+            return True
+        return False
+    l.handle_event = types.MethodType(label_event, l, widgets.Label)
+
+    b = widgets.Button(parent=top, y=top.rect.height-1, label="Back",
+                       shortcut="{Esc}", key_trigger=utils.vkeys["Esc"],
+                       action=lambda: events.post(events.OK))
+    b.rect.right = top.rect.width - 2
+
+    main_loop(top, dialog=True)
 
 def options_menu():
     top = widgets.Dialog(width=55, height=30)
@@ -87,6 +112,5 @@ def options_menu():
                             on_event=config.int_option_handler("core", "height", minimum=25))
     widgets.OptionsListItem(options, on_label=config.boolean_option_formatter("Fullscreen", "core", "fullscreen"),
                             on_event=config.boolean_option_handler("core", "fullscreen"))
-
 
     main_loop(top, dialog=True)
