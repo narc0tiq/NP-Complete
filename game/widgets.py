@@ -166,15 +166,20 @@ button_cs = tcod.ColorSet()
 button_cs.set_colors(1, fgcolor=tcod.color.LIME)
 
 class Button(Widget):
-    def __init__(self, shortcut, label, parent=None, console=None, x=0, y=0, width=0,
-                 key_trigger=None, action=None, color_set=None):
+    def __init__(self, key, label, parent=None, console=None, x=0, y=0, width=0,
+                 action=None, color_set=None):
         super(Button, self).__init__(parent, console, x, y, width, height=1, color_set=color_set)
-        self.handlers['key'] = key_trigger
+
+        self.key_check = utils.key_check(key)
+        if self.key_check is None:
+            raise ValueError("Key '%s' does not appear to be a valid key!" % key)
+
         self.handlers['activate'] = action
+
         if self.color_set is None:
             self.color_set = button_cs
 
-        label_text = self.color_set.sprintf("%(1)c" + shortcut + "%(0)c " + label)
+        label_text = self.color_set.sprintf("%%(1)c{%s}%%(0)c %s" % (key, label))
         self.label = Label(parent=self, x=1, text=label_text)
         if self.rect.width < 1:
             self.rect.resize(width=self.label.rect.width)
@@ -197,11 +202,10 @@ class Button(Widget):
         self.console.put_char(origin.x + self.rect.width - 1, origin.y, ']')
 
     def handle_event(self, ev):
-        if ev.type is events.KEY:
-            if 'key' in self.handlers and self.handlers['key'](ev.data):
-                if 'activate' in self.handlers:
-                    self.handlers['activate']()
-                    return True
+        if ev.type is events.KEY and self.key_check(ev.data):
+            if 'activate' in self.handlers:
+                self.handlers['activate']()
+                return True
 
         super(Button, self).handle_event(ev)
 
@@ -229,7 +233,7 @@ class ListItem(Label):
     def handle_event(self, ev):
         if ev.type == events.KEY and ev.data.vk == tcod.key.ENTER:
             if 'activate' in self.handlers:
-                self.handlers['activate'](self)
+                print self.handlers['activate'](self)
             return True
 
         return super(ListItem, self).handle_event(ev)

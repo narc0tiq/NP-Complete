@@ -45,7 +45,7 @@ def main_loop(top, dialog=False):
                 events.post(events.QUIT)
                 return
             elif dialog and event.type in {events.OK, events.CANCEL}:
-                return
+                return event.data
             elif event.type is events.LAUNCH:
                 event.data()
             else:
@@ -62,7 +62,7 @@ def main_menu():
     m.add_item("n", "new game")
     m.add_item("l", "load game", disabled=True)
     m.add_item("O", "Options", on_activate=lambda w: events.post(events.LAUNCH, options_menu))
-    m.add_item("k", "keybind testing", on_activate=lambda w: events.post(events.LAUNCH, keybind_dialog))
+    m.add_item("k", "keybind testing", on_activate=lambda w: keybind_dialog())
     m.add_item("M", "Mods", disabled=True)
     m.add_item("q", "quit", on_activate=lambda w: events.post(events.QUIT))
     m.center_in_parent()
@@ -73,25 +73,22 @@ def keybind_dialog():
     top = widgets.Dialog(width=40, height=3)
     top.center_in_console()
 
-    title = widgets.Label(parent=top, x=2, text="Keybind Testing")
+    title = widgets.Label(parent=top, x=2, text="Keybind Capture")
 
-    l = widgets.Label(parent=top, x=1, y=1, text="Press a key...", width=38)
+    l = widgets.Label(parent=top, x=1, y=1, text="Press a key (Esc to cancel)...", width=38)
     def label_event(self, ev):
-        if ev.type == events.KEY and not utils.key_check("Esc")(ev.data):
-            name = utils.name_key(ev.data)
-            print name
-            if name is not None:
-                self.text = name
+        if ev.type is events.KEY:
+            if utils.key_check("Esc")(ev.data):
+                events.post(events.CANCEL)
+            else:
+                name = utils.name_key(ev.data)
+                if name is not None:
+                    events.post(events.OK, name)
             return True
         return False
     l.handle_event = types.MethodType(label_event, l, widgets.Label)
 
-    b = widgets.Button(parent=top, y=top.rect.height-1, label="Back",
-                       shortcut="{Esc}", key_trigger=utils.vkeys["Esc"],
-                       action=lambda: events.post(events.OK))
-    b.rect.right = top.rect.width - 2
-
-    main_loop(top, dialog=True)
+    return main_loop(top, dialog=True)
 
 def options_menu():
     top = widgets.Dialog(width=55, height=30)
@@ -100,8 +97,7 @@ def options_menu():
     title = widgets.Label(parent=top, x=2, text="Options")
 
     b = widgets.Button(parent=top, y=top.rect.height-1,
-                       label="Back to menu", shortcut="{Esc}",
-                       key_trigger=lambda k: k.vk==tcod.key.ESCAPE,
+                       label="Back to menu", key="Esc",
                        action=lambda: events.post(events.OK))
     b.rect.right = top.rect.width - 2
 
