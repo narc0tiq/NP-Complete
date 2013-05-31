@@ -100,7 +100,7 @@ for name, vk in tcod.key.__dict__.items():
     elif len(name) == 2 and name.startswith("K"):
         continue
     elif name.startswith("KP"):
-        name = "KP" + name[2:].capitalize()
+        name = "Num" + name[2:].capitalize()
     elif name == "LWIN":
         name = "LWin"
     elif name == "NUMLOCK":

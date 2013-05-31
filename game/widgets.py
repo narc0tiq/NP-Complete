@@ -249,10 +249,11 @@ options_cs.set_colors(2, fgcolor=tcod.color.AMBER)
 options_cs.set_colors(3, fgcolor=tcod.color.LIGHT_RED)
 
 class OptionsListItem(ListItem):
-    def __init__(self, parent, on_label, on_event):
+    def __init__(self, parent, on_label, on_event, description=""):
         super(OptionsListItem, self).__init__(parent, label=on_label())
         self.handlers['dynamic_text'] = on_label
         self.handlers['event'] = on_event
+        self.description = description
         if self.color_set is None:
             self.color_set = options_cs
 

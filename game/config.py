@@ -49,9 +49,9 @@ def int_option_handler(section, option, minimum=None, maximum=None):
 
 def boolean_option_handler(section, option):
     def handler(event):
-        if event.type is events.KEY and event.data.vk in (tcod.key.TAB, tcod.key.LEFT, tcod.key.RIGHT):
+        if event.type is events.KEY and event.data.vk in (tcod.key.ENTER, tcod.key.LEFT, tcod.key.RIGHT):
             value = True
-            if event.data.vk == tcod.key.TAB:
+            if event.data.vk == tcod.key.ENTER:
                 value = not parser.getboolean(section, option)
             elif event.data.vk == tcod.key.LEFT:
                 value = False
@@ -63,9 +63,9 @@ def boolean_option_handler(section, option):
 def key_option_handler(section, option):
     def handler(event):
         if event.type is events.KEY:
-            if event.data.vk == tcod.key.BACKSPACE:
+            if event.data.vk in (tcod.key.BACKSPACE, tcod.key.LEFT):
                 parser.set(section, option, 'None')
-            else:
+            elif event.data.vk in (tcod.key.ENTER, tcod.key.RIGHT):
                 value = dialogs.keybind_dialog()
                 if value:
                     parser.set(section, option, value)
