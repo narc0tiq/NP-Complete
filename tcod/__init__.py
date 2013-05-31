@@ -169,7 +169,9 @@ class Console(object):
     def put_char(self, x=0, y=0, char=' ', flags=libtcod.BKGND_NONE):
         return libtcod.console_put_char(self.console_id, x, y, char, flags)
 
-    def print_ex(self, x=0, y=0, flags=libtcod.BKGND_NONE, align=libtcod.LEFT, text="DEFAULT_TEXT"):
+    def print_ex(self, x=0, y=0, flags=libtcod.BKGND_NONE, align=libtcod.LEFT, text=""):
+        if text is None:
+            raise ValueError("Trying to console.print_ex a None!")
         return libtcod.console_print_ex(self.console_id, x, y, flags, align, text)
 
     def rect(self, x, y, width, height, clear=False, effect=libtcod.BKGND_SET):
@@ -187,6 +189,8 @@ class Console(object):
         return libtcod.console_clear(self.console_id)
 
     def get_height_rect(self, x=0, y=0, width=None, height=None, text=''):
+        if text is None:
+            raise ValueError("Trying to console.get_height_rect of a None!")
         if width is None:
             width = self.width - x
         if height is None:
@@ -195,6 +199,8 @@ class Console(object):
 
     def print_rect_ex(self, x=0, y=0, width=None, height=None, effect=libtcod.BKGND_NONE,
                       align=libtcod.LEFT, text=''):
+        if text is None:
+            raise ValueError("Trying to console.print_rect_ex a None!")
         if width is None:
             width = self.width - x
         if height is None:
