@@ -1,8 +1,8 @@
 """ Core functions and classes for a libtcod game. Not game-specific. """
-import time, types
+import time
 
 import tcod
-from game import config, events, widgets
+from game import config, events, widgets, dialogs
 
 def slow_print(widget, text, y=1):
     label = widgets.Label(parent=widget, y=y, text=text)
@@ -20,37 +20,6 @@ def slow_print(widget, text, y=1):
             widget.render()
             return
 
-def get_input():
-    """ Grab the mouse and all the key events from libtcod and {events.post} them. """
-    key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS | tcod.event.MOUSE)
-    events.post(events.MOUSE, mouse)
-    while key.vk != tcod.key.NONE:
-        events.post(events.KEY, key)
-        key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS)
-
-def main_loop(top, dialog=False):
-    while True:
-        top.render()
-        tcod.flush()
-
-        # Get the input...
-        get_input()
-        if tcod.is_window_closed():
-            events.post(events.QUIT)
-
-        # ...and handle it:
-        for event in events.generator():
-            if event.type is events.QUIT:
-                # Repost the quit event to break out of all the loops.
-                events.post(events.QUIT)
-                return
-            elif dialog and event.type in {events.OK, events.CANCEL}:
-                return event.data
-            elif event.type is events.LAUNCH:
-                event.data()
-            else:
-                top.handle_event(event)
-
 def main_menu():
     top = widgets.Image(path="menu_bg.png", width=tcod.root_console.width, height=tcod.root_console.height)
 
@@ -62,33 +31,11 @@ def main_menu():
     m.add_item("n", "new game")
     m.add_item("l", "load game", disabled=True)
     m.add_item("O", "Options", on_activate=lambda w: events.post(events.LAUNCH, options_menu))
-    m.add_item("k", "keybind testing", on_activate=lambda w: keybind_dialog())
     m.add_item("M", "Mods", disabled=True)
     m.add_item("q", "quit", on_activate=lambda w: events.post(events.QUIT))
     m.center_in_parent()
 
-    main_loop(top)
-
-def keybind_dialog():
-    top = widgets.Dialog(width=40, height=3)
-    top.center_in_console()
-
-    title = widgets.Label(parent=top, x=2, text="Keybind Capture")
-
-    l = widgets.Label(parent=top, x=1, y=1, text="Press a key (Esc to cancel)...", width=38)
-    def label_event(self, ev):
-        if ev.type is events.KEY:
-            if utils.key_check("Esc")(ev.data):
-                events.post(events.CANCEL)
-            else:
-                name = utils.name_key(ev.data)
-                if name is not None:
-                    events.post(events.OK, name)
-            return True
-        return False
-    l.handle_event = types.MethodType(label_event, l, widgets.Label)
-
-    return main_loop(top, dialog=True)
+    dialogs.main_loop(top)
 
 def options_menu():
     top = widgets.Dialog(width=55, height=30)
@@ -108,5 +55,7 @@ def options_menu():
                             on_event=config.int_option_handler("core", "height", minimum=25))
     widgets.OptionsListItem(options, on_label=config.boolean_option_formatter("Fullscreen", "core", "fullscreen"),
                             on_event=config.boolean_option_handler("core", "fullscreen"))
+    widgets.OptionsListItem(options, on_label=config.string_option_formatter("Activate key", "keys", "activate"),
+                            on_event=config.key_option_handler("keys", "activate"))
 
-    main_loop(top, dialog=True)
+    dialogs.main_loop(top, dialog=True)

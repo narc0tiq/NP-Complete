@@ -245,6 +245,8 @@ class ListItem(Label):
 
 options_cs = tcod.ColorSet()
 options_cs.set_colors(1, fgcolor=tcod.color.LIME)
+options_cs.set_colors(2, fgcolor=tcod.color.AMBER)
+options_cs.set_colors(3, fgcolor=tcod.color.LIGHT_RED)
 
 class OptionsListItem(ListItem):
     def __init__(self, parent, on_label, on_event):
