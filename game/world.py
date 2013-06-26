@@ -1,13 +1,9 @@
 from collections import namedtuple
 from numpy import zeros, int16
+from tcod import color
 
 CHUNK_WIDTH = CHUNK_HEIGHT = 256
 CHUNK_DEPTH = 16
-
-def coords_to_chunk(x, y, z):
-    return (x - (x % CHUNK_WIDTH),
-            y - (y % CHUNK_HEIGHT),
-            z - (z % CHUNK_DEPTH))
 
 class World(object):
     def __init__(self):
@@ -39,4 +35,22 @@ class ChunkProvider(dict):
 
     def __missing__(self, key):
         return Chunk(*key[0:3])
+
+def coords_to_chunk(x, y, z):
+    return (x - (x % CHUNK_WIDTH),
+            y - (y % CHUNK_HEIGHT),
+            z - (z % CHUNK_DEPTH))
+
+
+class Tile(object):
+    def __init__(self, name, glyph, fgcolor=color.WHITE, bgcolor=color.BLACK):
+        self.name = name
+        self.glyph = glyph
+        self.fgcolor = fgcolor
+        self.bgcolor = bgcolor
+
+tile_dict = dict()
+tile_dict['nothing'] = Tile('Nothing', glyph=' ', bgcolor=color.BLACK)
+tile_dict['floor'] = Tile('Floor', glyph=' ', bgcolor=color.DARK_AMBER)
+tile_dict['wall'] = Tile('Wall', glyph='#', bgcolor=color.DARKER_ORANGE)
 
