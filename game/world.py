@@ -1,6 +1,9 @@
-import itertools
+from __future__ import unicode_literals
+
+import json
 from collections import namedtuple
 from numpy import zeros, int16
+
 from tcod import color
 
 CHUNK_WIDTH = CHUNK_HEIGHT = 256
@@ -61,22 +64,18 @@ class Tile(object):
     def __repr__(self):
         return '<Tile(name=%s)>' % self.name
 
-tiles = dict()
 class TileMap(object):
     def __init__(self, fp=None):
+        """ fp is expected to be a readable file-like object """
         self.degrades = dict()
         self.tilemap = []
 
         if fp is not None:
-            # TODO: Load mappings out of fp
-            pass
+            self.tilemap, self.degrades = json.load(fp)
         else:
-            self.counter = itertools.count()
             for tile in tiles.itervalues():
                 self.degrades[tile.name] = tile.degrades_to
                 self.tilemap.append(tile.name)
-
-    # TODO: def __iter__(self)
 
     def __getitem__(self, key):
         """ Will return a degraded Tile if the original is not available """
@@ -88,6 +87,11 @@ class TileMap(object):
         else:
             return self._get_degraded(self.degrades[tilename])
 
+    def save(self, fp):
+        """ fp is expected to be a .write()-supporting file-like object """
+        json.dump((self.tilemap, self.degrades), fp)
+
+tiles = dict()
 def _can_degrade(tile):
     """
     A tile is considered degradable if it's possible to reach the 'nothing'
