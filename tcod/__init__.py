@@ -314,11 +314,16 @@ class ColorSet(object):
         """ Gives you string with the color control characters removed. """
         return string.translate(None, ''.join([chr(x) for x in self.chars.values()]))
 
-    def apply(self):
+    def apply(self, console=None):
         """
         Call this before rendering a string that wants to use the color pairs
-        defined in this ColorSet.
+        defined in this ColorSet. If you provide a console, the console's fore-
+        and background will be set to the default colors.
         """
+        if console:
+            console.set_default_foreground(self.fgcolor)
+            console.set_default_background(self.bgcolor)
+
         for color_code, colors in self.colors.iteritems():
             fgcolor, bgcolor = colors
             if fgcolor is None:
