@@ -120,3 +120,10 @@ class Widget(object):
 
         return False
 
+class Dialog(Widget):
+    """ A dialog renders a frame inside itself, on its outer edge. """
+    def render(self):
+        self.colors.apply(self.console)
+        self.console.print_frame(self.placement.left, self.placement.top,
+                                 self.placement.width, self.placement.height)
+        super(Dialog, self).render()
