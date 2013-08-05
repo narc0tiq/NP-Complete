@@ -41,6 +41,22 @@ class Rect(object):
         self.height = height
 
     @property
+    def origin(self):
+        return self.left, self.top
+
+    @origin.setter
+    def origin(self, value):
+        self.left, self.top = value
+
+    @property
+    def size(self):
+        return self.width, self.height
+
+    @size.setter
+    def size(self, value):
+        self.width, self.height = value
+
+    @property
     def right(self):
         return self.left + self.width
 

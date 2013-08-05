@@ -238,8 +238,17 @@ class Image(object):
         self.height = height
         self.image_id = libtcod.image_new(width, height)
 
-    def get_size(self):
+    @property
+    def image_size(self):
         return libtcod.image_get_size(self.image_id)
+
+    @property
+    def size(self):
+        return (self.width, self.height)
+
+    @size.setter
+    def size(self, value):
+        self.width, self.height = value
 
     def blit_2x(self, console, dest_x=0, dest_y=0, x=0, y=0, width=None, height=None):
         if width is None:
@@ -252,7 +261,7 @@ class Image(object):
 class ImageFile(Image):
     def __init__(self, path):
         self.image_id = libtcod.image_load(path)
-        self.width, self.height = self.get_size()
+        self.size = self.image_size
 
 class ColorSet(object):
     """
