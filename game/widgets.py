@@ -127,3 +127,14 @@ class Dialog(Widget):
         self.console.print_frame(self.placement.left, self.placement.top,
                                  self.placement.width, self.placement.height)
         super(Dialog, self).render()
+
+class Image(Widget):
+    """ Render an image from a file using libtcod's image handling. """
+    def __init__(self, path, parent=None, x=0, y=0, width=0, height=0):
+        super(Image, self).__init__(parent, x, y, width, height)
+        self.image = tcod.ImageFile(path)
+        self.bounds.width, self.bounds.height = self.image.width, self.image.height
+
+    def render(self):
+        self.image.blit_2x(self.console)
+        super(Image, self).render()
