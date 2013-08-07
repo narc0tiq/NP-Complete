@@ -29,6 +29,7 @@ class Widget(object):
          * x, y, width, height: if provided, these define the on-console `placement` of the
          widget. Some widgets may use width and height as `bounds`, as well.
         """
+        self.parent = None
         self.children = utils.OrderedSet()
         self.console = tcod.root_console
         self.handlers = {}
@@ -138,3 +139,50 @@ class Image(Widget):
     def render(self):
         self.image.blit_2x(self.console)
         super(Image, self).render()
+
+class Label(Widget):
+    """ Render text, with optional maximum width. """
+    def __init__(self, text, parent=None, x=0, y=0, width=0):
+        super(Label, self).__init__(parent, x, y, width, height=0)
+        self.bounds.width = width
+        self._text = ''
+        self.text = text
+        self.align = tcod.align.LEFT
+
+    @property
+    def max_width(self):
+        return self.bounds.width
+
+    @max_width.setter
+    def max_width(self, value):
+        self.bounds.width = width
+        self._recalc_size()
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, value):
+        self._text = value
+        self._recalc_size()
+
+    def _recalc_size(self):
+        text = self.colors.strip(self._text)
+        events.post(events.RESIZE, self)
+
+        width = self.bounds.width
+        if self.bounds.width < 1:
+            width = min(len(text), self.console.width - self.placement.left)
+        height = self.console.get_height_rect(x=self.placement.left, y=self.placement.top,
+                                              width=width, text=self._text)
+
+        self.placement.size = width, height
+
+    def render(self):
+        self.colors.apply(self.console)
+        x,y = self.to_screen(utils.origin)
+
+        self.console.print_rect_ex(*self.placement, effect=self.effect, align=self.align,
+                                   text=self._text)
+        super(Label, self).render()

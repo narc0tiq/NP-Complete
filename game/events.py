@@ -14,6 +14,8 @@ LAUNCH = id.next()
 OK = id.next()
 CANCEL = id.next()
 APPLY = id.next()
+# Widget events:
+RESIZE = id.next()
 
 queue = Queue.PriorityQueue()
 Event = namedtuple("Event", ["type", "data"])

@@ -94,6 +94,21 @@ class Rect(object):
     def __repr__(self):
         return "Rect(x=%d, y=%d, width=%d, height=%d)" % (self.left, self.top, self.width, self.height)
 
+    def __len__(self):
+        return 4
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.left
+        elif key == 1:
+            return self.top
+        elif key == 2:
+            return self.width
+        elif key == 3:
+            return self.height
+        else:
+            raise IndexError()
+
 
 class OrderedSet(MutableSet):
     """ Lovingly taken from http://code.activestate.com/recipes/576694/ """
