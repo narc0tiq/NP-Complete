@@ -2,19 +2,18 @@ import Queue
 from itertools import count
 from collections import namedtuple
 
-counter = count()
-id = lambda: counter.next()
+id = count()
 
 # Events are handled by PriorityQueue, so the event type ID defines the order of
 # processing. This may turn out to be a bad thing.
-QUIT = id()
-MOUSE = id()
-KEY = id()
-LAUNCH = id()
+QUIT = id.next()
+MOUSE = id.next()
+KEY = id.next()
+LAUNCH = id.next()
 # Dialog events:
-OK = id()
-CANCEL = id()
-APPLY = id()
+OK = id.next()
+CANCEL = id.next()
+APPLY = id.next()
 
 queue = Queue.PriorityQueue()
 Event = namedtuple("Event", ["type", "data"])
