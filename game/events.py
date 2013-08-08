@@ -16,12 +16,13 @@ CANCEL = id.next()
 APPLY = id.next()
 # Widget events:
 RESIZE = id.next()
+ACTIVATE = id.next()
 
 queue = Queue.PriorityQueue()
-Event = namedtuple("Event", ["type", "data"])
+Event = namedtuple("Event", ["type", "data", "widget"])
 
-def post(type, data=None):
-    queue.put(Event(type, data))
+def post(type, data=None, widget=None):
+    queue.put(Event(type, data, widget))
 
 def generator():
     try:

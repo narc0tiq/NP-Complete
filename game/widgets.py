@@ -112,8 +112,14 @@ class Widget(object):
         to return True for a dispatch call is considered to have handled the event, and it
         will not bubble further.
         """
-        if event.type in self.handlers and self.handlers[event.type](self, event):
-            return True
+        if event.type in self.handlers:
+            if event.widget is None or event.widget is self:
+                if self.handlers[event.type](self, event):
+                    return True
+                # Short-circuit: event is directed at me and my handler
+                # rejected it; nobody else will take it.
+                elif event.widget is self:
+                    return False
 
         for child in self.children:
             if child.dispatch(event):
