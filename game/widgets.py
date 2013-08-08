@@ -192,3 +192,43 @@ class Label(Widget):
         self.console.print_rect_ex(*self.placement, effect=self.effect, align=self.align,
                                    text=self._text)
         super(Label, self).render()
+
+def activate_handler(widget, event):
+    """ Default handler for events.ACTIVATE; simply calls widget.action() """
+    widget.action(widget)
+    return True
+
+def key_handler(widget, event):
+    """
+    Default handler for events.KEY. Asks widget.key_match() and posts an
+    ACTIVATE event for the widget if true.
+    """
+    if widget.key_match(event.data):
+        events.post(events.ACTIVATE, widget=widget)
+        return True
+
+class Button(Label):
+    """ A label that responds to keyboard shortcuts. """
+    def __init__(self, key, label, parent=None, x=0, y=0, width=0, action=None):
+        super(Button, self).__init__(label, parent, x, y, width)
+        self.key = key
+        self.action = action
+        self.handlers[events.KEY] = key_handler
+        self.handlers[events.ACTIVATE] = activate_handler
+
+    @property
+    def key(self):
+        return self._key
+
+    @key.setter
+    def key(self, new_key):
+        if new_key is None:
+            self._key = None
+            self.key_match = lambda unused: False
+
+        key_match = utils.key_check(new_key)
+        if not key_match:
+            raise ValueError("'key' must be a valid name for utils.key_check()")
+
+        self._key = new_key
+        self.key_match = key_match
