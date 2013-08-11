@@ -4,46 +4,55 @@ import time, types
 import tcod
 from game import config, events, widgets, dialogs
 
+
 def slow_print(widget, text, y=1):
     label = widgets.Label(parent=widget, y=y, text=text)
-    label.center_in_parent(vertical=False)
+    label.center(vertical=False)
     label.text = ""
 
     for char in text:
         label.text = label.text + char
 
         widget.render()
-        tcod.flush() # Relying on the tcod.set_fps_limit() from earlier to limit our render rate
+        tcod.flush()  # Relying on the tcod.set_fps_limit() from earlier to limit our render rate
         key, mouse = tcod.check_for_event(tcod.event.KEY_PRESS | tcod.event.MOUSE_PRESS)
         if key.vk != tcod.key.NONE or mouse.lbutton or mouse.rbutton:
             label.text = text
             widget.render()
             return
 
+
 def main_menu():
-    top = widgets.Image(path="menu_bg.png", width=tcod.root_console.width, height=tcod.root_console.height)
+    print tcod.root_console.width, tcod.root_console.height
+    top = widgets.Image(path="menu_bg.png",
+                        width=tcod.root_console.width, height=tcod.root_console.height)
 
     slow_print(top, "NP-Complete")
     time.sleep(0.2)
     slow_print(top, "Survival is a Hard problem", y=2)
 
-    m = widgets.Menu(parent=top)
-    m.add_item("n", "new game")
-    m.add_item("l", "load game", disabled=True)
-    m.add_item("O", "Options", on_activate=lambda w: events.post(events.LAUNCH, options_menu))
-    m.add_item("M", "Mods", disabled=True)
-    m.add_item("q", "quit", on_activate=lambda w: events.post(events.QUIT))
-    m.center_in_parent()
+    m = widgets.List(parent=top)
+    widgets.Label(parent=m, text="This is a test")
+    widgets.Label(parent=m, text="Hello.")
+    m.selected_child = m.children.last
+    widgets.Label(parent=m, text="Another long thing.")
+#    m.add_item("n", "new game")
+#    m.add_item("l", "load game", disabled=True)
+#    m.add_item("O", "Options", on_activate=lambda w: events.post(events.LAUNCH, options_menu))
+#    m.add_item("M", "Mods", disabled=True)
+#    m.add_item("q", "quit", on_activate=lambda w: events.post(events.QUIT))
+    m.center()
 
     dialogs.main_loop(top)
 
+
 def options_menu():
-    top = widgets.Dialog(width=55, height=tcod.root_console.height-6)
+    top = widgets.Dialog(width=55, height=tcod.root_console.height - 6)
     top.center_in_console()
 
     widgets.Label(parent=top, x=2, text="Options")
 
-    b = widgets.Button(parent=top, y=top.rect.height-1,
+    b = widgets.Button(parent=top, y=top.rect.height - 1,
                        label="Back to menu", key="Esc",
                        action=lambda: events.post(events.OK))
     b.rect.right = top.rect.width - 2
@@ -52,7 +61,7 @@ def options_menu():
     cs.set_colors(1, fgcolor=tcod.color.LIME)
     cs.set_colors(2, fgcolor=tcod.color.AMBER)
 
-    options = widgets.List(parent=top, x=1, y=1, width=23, height=top.rect.height-2)
+    options = widgets.List(parent=top, x=1, y=1, width=23, height=top.rect.height - 2)
     widgets.OptionsListItem(options, on_label=config.int_option_formatter("Window width", "core", "width"),
                             on_event=config.int_option_handler("core", "width", minimum=80),
                             description=cs.sprintf("The width of the window, if fullscreen is disabled.\n"

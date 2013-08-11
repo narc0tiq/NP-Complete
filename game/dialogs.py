@@ -32,7 +32,7 @@ def main_loop(top, dialog=False):
             elif event.type is events.LAUNCH:
                 event.data()
             else:
-                top.handle_event(event)
+                top.dispatch(event)
 
 def keybind_dialog():
     top = widgets.Dialog(width=40, height=3)
@@ -41,17 +41,15 @@ def keybind_dialog():
     title = widgets.Label(parent=top, x=2, text="Keybind Capture")
 
     l = widgets.Label(parent=top, x=1, y=1, text="Press a key (Esc to cancel)...", width=38)
-    def label_event(self, ev):
-        if ev.type is events.KEY:
-            if utils.key_check("Esc")(ev.data):
-                events.post(events.CANCEL)
-            else:
-                name = utils.name_key(ev.data)
-                if name is not None:
-                    events.post(events.OK, name)
-            return True
-        return False
-    l.handle_event = types.MethodType(label_event, l, widgets.Label)
+    def on_key(ev):
+        if utils.key_check("Esc")(ev.data):
+            events.post(events.CANCEL)
+        else:
+            name = utils.name_key(ev.data)
+            if name is not None:
+                events.post(events.OK, name)
+        return True
+    l.handlers[events.KEY] = on_key
 
     return main_loop(top, dialog=True)
 
