@@ -110,7 +110,7 @@ class Rect(object):
             raise IndexError()
 
 
-OrderedSetItem = namedtuple('OrderedSetItem', ['curr', 'next', 'prev'])
+OrderedSetItem = namedtuple('OrderedSetItem', ['curr', 'prev', 'next'])
 
 class OrderedSet(MutableSet):
     """ Lovingly taken from http://code.activestate.com/recipes/576694/ """
@@ -155,11 +155,18 @@ class OrderedSet(MutableSet):
         return self.end[1][0]
 
     def itertriples(self):
+        """ Iterate this set as triples (curr, prev, next) """
         end = self.end
         curr = end[2]
         while curr is not end:
             yield OrderedSetItem(curr[0], curr[1][0], curr[2][0])
             curr = curr[2]
+
+    def triple(self, key):
+        """ Fetch the triple (curr, prev, next) around a contained item. """
+        if key in self.map:
+            curr = self.map[key]
+            return OrderedSetItem(curr[0], curr[1][0], curr[2][0])
 
     def __iter__(self):
         end = self.end
