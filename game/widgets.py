@@ -1,5 +1,5 @@
 """ User Interface bits and widgets """
-import collections
+import collections, inspect
 
 import tcod
 from game import events, utils
@@ -34,6 +34,9 @@ class Widget(object):
         self.children = utils.OrderedSet()
         self.console = tcod.root_console
         self.handlers = {}
+        for name, method in inspect.getmembers(self, predicate=inspect.ismethod):
+            try: self.handlers[method.handles_event] = method
+            except AttributeError: pass # Not every method is a handler, and that's fine.
         self.colors = active_colors
         self.effect = tcod.background.SET
         self.bounds = utils.Rect(0,0, width,height)
@@ -115,7 +118,7 @@ class Widget(object):
         """
         if event.type in self.handlers:
             if event.widget is None or event.widget is self:
-                if self.handlers[event.type](self, event):
+                if self.handlers[event.type](event):
                     return True
                 # Short-circuit: event is directed at me and my handler
                 # rejected it; nobody else will take it.
@@ -176,15 +179,14 @@ class Label(Widget):
 
     def _recalc_size(self):
         text = self.colors.strip(self._text)
-        events.post(events.RESIZE, self)
-
         width = self.bounds.width
         if self.bounds.width < 1:
             width = min(len(text), self.console.width - self.placement.left)
         height = self.console.get_height_rect(x=self.placement.left, y=self.placement.top,
                                               width=width, text=self._text)
-
-        self.placement.size = width, height
+        if width, height != self.placement.size:
+            self.placement.size = width, height
+            events.post(events.RESIZE, data=self)
 
     def render(self):
         self.colors.apply(self.console)
@@ -194,28 +196,23 @@ class Label(Widget):
                                    text=self._text)
         super(Label, self).render()
 
-def activate_handler(widget, event):
-    """ Default handler for events.ACTIVATE; simply calls widget.action() """
-    widget.action(widget)
-    return True
-
-def key_handler(widget, event):
-    """
-    Default handler for events.KEY. Asks widget.key_match() and posts an
-    ACTIVATE event for the widget if true.
-    """
-    if widget.key_match(event.data):
-        events.post(events.ACTIVATE, widget=widget)
-        return True
-
 class Button(Label):
     """ A label that responds to keyboard shortcuts. """
     def __init__(self, key, label, parent=None, x=0, y=0, width=0, action=None):
         super(Button, self).__init__(label, parent, x, y, width)
         self.key = key
         self.action = action
-        self.handlers[events.KEY] = key_handler
-        self.handlers[events.ACTIVATE] = activate_handler
+
+    @events.handler(events.ACTIVATE)
+    def on_activate(self, event):
+        self.action(self)
+        return True
+
+    @events.handler(events.KEY)
+    def on_key(self, event):
+        if self.key_match(event.data):
+            events.post(events.ACTIVATE, widget=self)
+            return True
 
     @property
     def key(self):

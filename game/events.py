@@ -30,3 +30,14 @@ def generator():
             yield queue.get(False)
     except Queue.Empty:
         raise StopIteration()
+
+def handler(event_type):
+    """
+    A decorator that tags event handlers. Widgets use their __init__ to check for tagged handlers
+    and add them to their .handlers dict.
+    """
+    def decorator(function):
+        function.handles_event = event_type
+        return function
+    return decorator
+
