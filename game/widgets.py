@@ -276,7 +276,7 @@ class List(Widget):
     def _recalc_size(self):
         self._recalc_itempos()
         width = max(imap(lambda child: child.placement.width, self.children))
-        height = self.children.last.placement.bottom if self.children.last else 0
+        height = sum(imap(lambda child: child.placement.height, self.children))
         self.sub_console.grow(width, height)
 
         self.placement.width = self.bounds.width if self.bounds.width > 0 else width
@@ -287,8 +287,11 @@ class List(Widget):
 
     def _recalc_itempos(self):
         for curr, prev, next in self.children.itertriples():
-            curr.placement.left = 0
-            curr.placement.top = prev.placement.bottom if prev else 0
+            # We set up a new sub_console to print in, so our children must think they are at the
+            # (0,0) position on-screen (since they are at that position in the sub_console)
+            x, y = self.to_screen(utils.origin)
+            curr.placement.left = -x
+            curr.placement.top = prev.placement.bottom if prev else -y
 
     def scroll_by(self, amount):
         new_top = self.bounds.top + amount
