@@ -135,8 +135,8 @@ class Dialog(Widget):
     """ A dialog renders a frame inside itself, on its outer edge. """
     def render(self):
         self.colors.apply(self.console)
-        self.console.print_frame(self.placement.left, self.placement.top,
-                                 self.placement.width, self.placement.height)
+        x, y = self.to_screen(utils.origin)
+        self.console.print_frame(x, y, *self.placement.size)
         super(Dialog, self).render()
 
 class Image(Widget):
@@ -146,7 +146,8 @@ class Image(Widget):
         self.image = tcod.ImageFile(path)
 
     def render(self):
-        self.image.blit_2x(self.console)
+        x, y = self.to_screen(utils.origin)
+        self.image.blit_2x(self.console, x, y, *self.bounds)
         super(Image, self).render()
 
 class Label(Widget):
@@ -189,8 +190,8 @@ class Label(Widget):
     def render(self):
         self.colors.apply(self.console)
         x,y = self.to_screen(utils.origin)
-
-        self.console.print_rect_ex(*self.placement, effect=self.effect, align=self.align,
+        self.console.print_rect_ex(x, y, *self.placement.size,
+                                   effect=self.effect, align=self.align,
                                    text=self._text)
         super(Label, self).render()
 
