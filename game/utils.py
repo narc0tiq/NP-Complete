@@ -144,6 +144,14 @@ class OrderedSet(MutableSet):
         self.discard(key)
         return key
 
+    @property
+    def first(self):
+        return self.end[2][0]
+
+    @property
+    def last(self):
+        return self.end[1][0]
+
     def __iter__(self):
         end = self.end
         curr = end[2]
