@@ -137,6 +137,13 @@ class OrderedSet(MutableSet):
             prev[2] = next
             next[1] = prev
 
+    def pop(self, last=True):
+        if not self:
+            raise KeyError('set is empty')
+        key = self.end[1][0] if last else self.end[2][0]
+        self.discard(key)
+        return key
+
     def __iter__(self):
         end = self.end
         curr = end[2]
@@ -150,13 +157,6 @@ class OrderedSet(MutableSet):
         while curr is not end:
             yield curr[0]
             curr = curr[1]
-
-    def pop(self, last=True):
-        if not self:
-            raise KeyError('set is empty')
-        key = self.end[1][0] if last else self.end[2][0]
-        self.discard(key)
-        return key
 
     def __repr__(self):
         if not self:
