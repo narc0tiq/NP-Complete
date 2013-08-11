@@ -221,6 +221,7 @@ class Button(Label):
         if new_key is None:
             self._key = None
             self.key_match = lambda unused: False
+            return
 
         key_match = utils.key_check(new_key)
         if not key_match:
