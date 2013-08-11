@@ -150,7 +150,8 @@ class Image(Widget):
 
     def render(self):
         x, y = self.to_screen(utils.origin)
-        self.image.blit_2x(self.console, x, y, *self.bounds)
+        self.image.blit_2x(self.console, x, y, *self.bounds.origin,
+                           width=2 * self.bounds.width, height=2 * self.bounds.height)
         super(Image, self).render()
 
 
