@@ -230,3 +230,91 @@ class Button(Label):
 
         self._key = new_key
         self.key_match = key_match
+
+
+class List(Widget):
+    def __init__(self, parent=None, x=0, y=0, width=0, height=0):
+        super(List, self).__init__(parent, x, y, width, height)
+        self.sub_console = tcod.Console(*self.bounds.size)
+        self._selected_child = None
+
+    @events.handler(events.RESIZE)
+    def on_resize(self, event):
+        if event.data in self.children:
+            self._recalc_size()
+            return True
+
+    def register_child(self, child):
+        super(List, self).register_child(child)
+        child.console = self.sub_console
+        if self.bounds.width > 0:
+            child.bounds.width = self.bounds.width - 1
+        self._recalc_size()
+
+    @property
+    def scroll_pos(self):
+        return (self.bounds.top, self.bounds.top + self.placement.height)
+
+    @property
+    def selected_child(self):
+        return self._selected_child
+
+    @selected_child.setter
+    def selected_child(self, child):
+        if self._selected_child:
+            self._selected_child.colors = active_colors
+        child.colors = selected_colors
+        self._selected_child = child
+
+    def _recalc_size(self):
+        self._recalc_itempos()
+        width = max(imap(lambda child: child.placement.width, self.children))
+        height = self.children.last.placement.bottom if self.children.last else 0
+        self.sub_console.grow(width, height)
+
+        self.placement.width = self.bounds.width if self.bounds.width > 0 else width
+        self.placement.height = self.bounds.height if self.bounds.height > 0 else height
+
+        for child in self.children:
+            child.placement.width = self.placement.width
+
+    def _recalc_itempos(self):
+        for curr, prev, next in self.children.itertriples():
+            curr.placement.left = 0
+            curr.placement.top = prev.placement.bottom if prev else 0
+
+    def scroll_by(self, amount):
+        new_top = self.bounds.top + amount
+        if new_top < 0 or new_top > self.bounds.height:
+            raise ValueError('Cannot scroll off-list to %d!' % new_top)
+        self.bounds.top = new_top
+
+    def scroll_to(self, top, bottom=None):
+        """
+        Scroll to bring either top or bottom into view, whichever is furthest from the current
+        visible location. Prefers bringing top into view when scrolling up, and bottom into view
+        when scrolling down.
+        """
+        if self.bounds.height < 1:
+            return # variable-height list is, by definition, always fully visible.
+        elif top < self.bounds.top: # scroll up to reveal top
+            self.scroll_by(top - self.bounds.top)
+        elif bottom and bottom > self.bounds.bottom: # scroll down to reveal bottom
+            self.scroll_by(bottom - self.bounds.bottom)
+        elif top > self.bounds.bottom: # scroll down to reveal top
+            self.scroll_by(top - self.bounds.bottom)
+
+    def render(self):
+        # Clear the sub_console and render all the children (onto it)
+        self.colors.apply(self.sub_console)
+        self.sub_console.clear()
+        super(List, self).render()
+
+        # Then just blit the right part of the sub_console onto our console
+        x, y = to_screen(utils.origin)
+        self.console.rect(x, y, *self.placement.size, clear=True)
+        self.sub_console.blit(self.bounds.left, self.bounds.top,
+                              self.placement.width, self.placement.height,
+                              self.console, x, y)
+
+
