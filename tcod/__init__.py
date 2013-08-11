@@ -95,9 +95,9 @@ class Console(object):
 
     def __init__(self, width=20, height=10, console_id=None):
         if console_id is None:
-            self.console_id = libtcod.console_new(width, height)
-            self.width = width
-            self.height = height
+            self.width = width if width > 0 else 20
+            self.height = height if height > 0 else 10
+            self.console_id = libtcod.console_new(self.width, self.height)
         else:
             self.console_id = console_id
             self.width = libtcod.console_get_width(console_id)
