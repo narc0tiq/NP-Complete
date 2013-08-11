@@ -8,16 +8,16 @@ COLOR_BASE = 0
 COLOR_SHORTCUT = 1
 
 active_colors = tcod.ColorSet()
-active_colors.set_colors(COLOR_BASE,
-                         fgcolor=tcod.color.LIGHT_GREY, bgcolor=tcod.color.BLACK)
-active_colors.set_colors(COLOR_SHORTCUT,
-                         fgcolor=tcod.color.LIME)
+active_colors.set_colors(COLOR_BASE, fgcolor=tcod.color.LIGHT_GREY, bgcolor=tcod.color.BLACK)
+active_colors.set_colors(COLOR_SHORTCUT, fgcolor=tcod.color.LIME)
+
+selected_colors = tcod.ColorSet()
+selected_colors.set_colors(COLOR_BASE, fgcolor=tcod.color.WHITE, bgcolor=tcod.color.AZURE)
+selected_colors.set_colors(COLOR_SHORTCUT, fgcolor=tcod.color.LIME)
 
 disabled_colors = tcod.ColorSet()
-disabled_colors.set_colors(COLOR_BASE,
-                           fgcolor=tcod.color.DARKER_GREY, bgcolor=tcod.color.BLACK)
-disabled_colors.set_colors(COLOR_SHORTCUT,
-                           fgcolor=tcod.color.LIGHT_GREY)
+disabled_colors.set_colors(COLOR_BASE, fgcolor=tcod.color.DARKER_GREY, bgcolor=tcod.color.BLACK)
+disabled_colors.set_colors(COLOR_SHORTCUT, fgcolor=tcod.color.LIGHT_GREY)
 
 
 class Widget(object):
