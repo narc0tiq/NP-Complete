@@ -195,6 +195,7 @@ class Label(Widget):
     def render(self):
         self.colors.apply(self.console)
         x,y = self.to_screen(utils.origin)
+        self.console.rect(x, y, *self.placement.size, clear=True)
         self.console.print_rect_ex(x, y, *self.placement.size,
                                    effect=self.effect, align=self.align,
                                    text=self._text)
