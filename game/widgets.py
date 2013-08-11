@@ -144,7 +144,6 @@ class Image(Widget):
     def __init__(self, path, parent=None, x=0, y=0, width=0, height=0):
         super(Image, self).__init__(parent, x, y, width, height)
         self.image = tcod.ImageFile(path)
-        self.bounds.size = self.image.size
 
     def render(self):
         self.image.blit_2x(self.console)
@@ -154,7 +153,6 @@ class Label(Widget):
     """ Render text, with optional maximum width. """
     def __init__(self, text, parent=None, x=0, y=0, width=0):
         super(Label, self).__init__(parent, x, y, width, height=0)
-        self.bounds.width = width
         self._text = ''
         self.text = text
         self.align = tcod.align.LEFT
