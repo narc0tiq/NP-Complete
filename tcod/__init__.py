@@ -1,5 +1,6 @@
 import libtcodpy as libtcod
 
+
 class Random(object):
     def __init__(self, stream_id):
         self.stream_id = stream_id
@@ -17,7 +18,7 @@ class Random(object):
 
         """
         if len(args) == 0 and 'stop' not in kwargs:
-            raise TypeError('get_int expects either 1 positional argument or the keyword argument "stop"')
+            raise TypeError('Need either 1 positional argument or the keyword argument "stop"')
 
         min_value = max_value = 0
         if len(args) == 1:
@@ -36,44 +37,57 @@ class Random(object):
 # A default Random for anyone to use
 random = Random(0)
 
-def set_custom_font(fontfile, flags=libtcod.FONT_LAYOUT_ASCII_INROW, horizontal_count=0, vertical_count=0):
+
+def set_custom_font(fontfile, flags=libtcod.FONT_LAYOUT_ASCII_INROW,
+                    horizontal_count=0, vertical_count=0):
     return libtcod.console_set_custom_font(fontfile, flags, horizontal_count, vertical_count)
+
 
 def init_root(width, height, title, fullscreen=False, renderer=libtcod.RENDERER_SDL):
     root_console.height = height
     root_console.width = width
     return libtcod.console_init_root(width, height, title, fullscreen, renderer)
 
+
 def wait_for_keypress(flush=False):
     return libtcod.console_wait_for_keypress(flush)
 
-def wait_for_event(mask=libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE, flush=False):
+
+def wait_for_event(mask=libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, flush=False):
     key, mouse = (libtcod.Key(), libtcod.Mouse())
     libtcod.sys_wait_for_event(mask, key, mouse, flush)
     return (key, mouse)
 
-def check_for_event(mask=libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE):
+
+def check_for_event(mask=libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE):
     key, mouse = (libtcod.Key(), libtcod.Mouse())
     libtcod.sys_check_for_event(mask, key, mouse)
     return (key, mouse)
 
+
 def set_fullscreen(want_fullscreen=True):
     return libtcod.console_set_fullscreen(want_fullscreen)
+
 
 def is_fullscreen():
     return libtcod.console_is_fullscreen()
 
+
 def is_key_pressed(key):
     return libtcod.console_is_key_pressed(key)
+
 
 def is_window_closed():
     return libtcod.console_is_window_closed()
 
+
 def flush():
     return libtcod.console_flush()
 
+
 def set_fps_limit(limit):
     return libtcod.sys_set_fps(limit)
+
 
 class Console(object):
     # Root console has id 0
@@ -90,7 +104,7 @@ class Console(object):
             self.height = libtcod.console_get_height(console_id)
 
     def close(self):
-        if self.console_id != self.ROOT_ID: # Root console cannot be console_delete()d
+        if self.console_id != self.ROOT_ID:  # Root console cannot be console_delete()d
             libtcod.console_delete(self.console_id)
 
     def __del__(self):
@@ -104,7 +118,7 @@ class Console(object):
             height = self.height
 
         if self.height >= height and self.width >= width:
-            return # No resize needed.
+            return  # No resize needed.
 
         self.resize(width, height)
 
@@ -118,7 +132,7 @@ class Console(object):
             height = self.height
 
         if self.height == height and self.width == width:
-            return # No resize needed.
+            return  # No resize needed.
 
         libtcod.console_delete(self.console_id)
         self.console_id = libtcod.console_new(width, height)
@@ -149,7 +163,7 @@ class Console(object):
             dest_id = dest_console.console_id
 
         return libtcod.console_blit(self.console_id, src_x, src_y, src_width, src_height,
-                             dest_id, dest_x, dest_y, alpha_fg, alpha_bg)
+                                    dest_id, dest_x, dest_y, alpha_fg, alpha_bg)
 
     def set_default_background(self, color):
         return libtcod.console_set_default_background(self.console_id, color)
@@ -206,10 +220,13 @@ class Console(object):
         if height is None:
             height = self.height - y
 
-        return libtcod.console_print_rect_ex(self.console_id, x, y, width, height, effect, align, text)
+        return libtcod.console_print_rect_ex(self.console_id,
+                                             x, y, width, height,
+                                             effect, align, text)
 
 # The root console
 root_console = Console(console_id=Console.ROOT_ID)
+
 
 class Map(object):
     def __init__(self, width, height):
@@ -231,6 +248,7 @@ class Map(object):
 
     def is_in_fov(self, x, y):
         return libtcod.map_is_in_fov(self.map, x, y)
+
 
 class Image(object):
     def __init__(self, width, height):
@@ -256,12 +274,16 @@ class Image(object):
         if height is None:
             height = self.height
 
-        return libtcod.image_blit_2x(self.image_id, console.console_id, dest_x, dest_y, x, y, width, height)
+        return libtcod.image_blit_2x(self.image_id, console.console_id,
+                                     dest_x, dest_y,
+                                     x, y, width, height)
+
 
 class ImageFile(Image):
     def __init__(self, path):
         self.image_id = libtcod.image_load(path)
         self.size = self.image_size
+
 
 class ColorSet(object):
     """
@@ -270,9 +292,9 @@ class ColorSet(object):
     for the underlying mechanism.
 
     Usage involves:
-        >>> cs = tcod.ColorSet()
-        >>> cs.set_colors(1, fgcolor=tcod.color.RED)
-        >>> cs.set_colors(2, bgcolor=tcod.color.AZURE)
+        >>> cs = ColorSet()
+        >>> cs.set_colors(1, fgcolor=color.RED)
+        >>> cs.set_colors(2, bgcolor=color.AZURE)
         >>> s = "Text with a %(1)cred%(0)c word and an %(2)cazure-background%(0) word."
         >>> fmt_s = cs.sprintf(s)
         >>> cs.apply()
@@ -343,6 +365,7 @@ class ColorSet(object):
 
 color_set_empty = ColorSet()
 
+
 # Useful constants
 class background(object):
     NONE = libtcod.BKGND_NONE
@@ -360,10 +383,12 @@ class background(object):
     ALPHA = libtcod.BKGND_ALPHA
     DEFAULT = libtcod.BKGND_DEFAULT
 
+
 class align(object):
     LEFT = libtcod.LEFT
     RIGHT = libtcod.RIGHT
     CENTER = libtcod.CENTER
+
 
 class event(object):
     KEY_PRESS = libtcod.EVENT_KEY_PRESS
@@ -376,6 +401,8 @@ class event(object):
     ANY = libtcod.EVENT_ANY
 
 Color = libtcod.Color
+
+
 class color(object):
     BLACK = libtcod.black
     DARKEST_GREY = libtcod.darkest_grey
@@ -586,6 +613,7 @@ class color(object):
     CELADON = libtcod.celadon
     PEACH = libtcod.peach
 
+
 class key(object):
     NONE = libtcod.KEY_NONE
     ESCAPE = libtcod.KEY_ESCAPE
@@ -653,6 +681,7 @@ class key(object):
     SCROLLLOCK = libtcod.KEY_SCROLLLOCK
     SPACE = libtcod.KEY_SPACE
     CHAR = libtcod.KEY_CHAR
+
 
 class font(object):
     LAYOUT_ASCII_INCOL = libtcod.FONT_LAYOUT_ASCII_INCOL

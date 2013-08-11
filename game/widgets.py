@@ -1,5 +1,6 @@
 """ User Interface bits and widgets """
-import collections, inspect
+import inspect
+from itertools import imap
 
 import tcod
 from game import events, utils
@@ -36,7 +37,7 @@ class Widget(object):
         self.handlers = {}
         for name, method in inspect.getmembers(self, predicate=inspect.ismethod):
             try: self.handlers[method.handles_event] = method
-            except AttributeError: pass # Not every method is a handler, and that's fine.
+            except AttributeError: pass  # Not every method is a handler, and that's fine.
         self.colors = active_colors
         self.effect = tcod.background.SET
         self.bounds = utils.Rect(0,0, width,height)
@@ -131,6 +132,7 @@ class Widget(object):
 
         return False
 
+
 class Dialog(Widget):
     """ A dialog renders a frame inside itself, on its outer edge. """
     def render(self):
@@ -138,6 +140,7 @@ class Dialog(Widget):
         x, y = self.to_screen(utils.origin)
         self.console.print_frame(x, y, *self.placement.size)
         super(Dialog, self).render()
+
 
 class Image(Widget):
     """ Render an image from a file using libtcod's image handling. """
@@ -149,6 +152,7 @@ class Image(Widget):
         x, y = self.to_screen(utils.origin)
         self.image.blit_2x(self.console, x, y, *self.bounds)
         super(Image, self).render()
+
 
 class Label(Widget):
     """ Render text, with optional maximum width. """
@@ -164,7 +168,7 @@ class Label(Widget):
 
     @max_width.setter
     def max_width(self, value):
-        self.bounds.width = width
+        self.bounds.width = value
         self._recalc_size()
 
     @property
@@ -183,7 +187,7 @@ class Label(Widget):
             width = min(len(text), self.console.width - self.placement.left)
         height = self.console.get_height_rect(x=self.placement.left, y=self.placement.top,
                                               width=width, text=self._text)
-        if width, height != self.placement.size:
+        if (width, height) != self.placement.size:
             self.placement.size = width, height
             events.post(events.RESIZE, data=self)
 
@@ -194,6 +198,7 @@ class Label(Widget):
                                    effect=self.effect, align=self.align,
                                    text=self._text)
         super(Label, self).render()
+
 
 class Button(Label):
     """ A label that responds to keyboard shortcuts. """
@@ -296,12 +301,12 @@ class List(Widget):
         when scrolling down.
         """
         if self.bounds.height < 1:
-            return # variable-height list is, by definition, always fully visible.
-        elif top < self.bounds.top: # scroll up to reveal top
+            return  # variable-height list is, by definition, always fully visible.
+        elif top < self.bounds.top:  # scroll up to reveal top
             self.scroll_by(top - self.bounds.top)
-        elif bottom and bottom > self.bounds.bottom: # scroll down to reveal bottom
+        elif bottom and bottom > self.bounds.bottom:  # scroll down to reveal bottom
             self.scroll_by(bottom - self.bounds.bottom)
-        elif top > self.bounds.bottom: # scroll down to reveal top
+        elif top > self.bounds.bottom:  # scroll down to reveal top
             self.scroll_by(top - self.bounds.bottom)
 
     def render(self):
@@ -311,10 +316,8 @@ class List(Widget):
         super(List, self).render()
 
         # Then just blit the right part of the sub_console onto our console
-        x, y = to_screen(utils.origin)
+        x, y = self.to_screen(utils.origin)
         self.console.rect(x, y, *self.placement.size, clear=True)
         self.sub_console.blit(self.bounds.left, self.bounds.top,
                               self.placement.width, self.placement.height,
                               self.console, x, y)
-
-
