@@ -44,8 +44,8 @@ class Widget(object):
         self.placement = utils.Rect(x,y, width,height)
 
         if parent:
-            parent.register_child(self)
             self.console = parent.console
+            parent.register_child(self)
 
     def register_child(self, child):
         """
