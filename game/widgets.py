@@ -26,8 +26,9 @@ class Widget(object):
         Initialize a new generic Widget.
 
          * parent: if provided, the parent will be called to register_child() this widget.
-         * x, y, width, height: if provided, these define the on-console `placement` of the
-         widget. Some widgets may use width and height as `bounds`, as well.
+         * x, y: if provided, these define the on-console `placement` of the
+         widget.
+         * width, height: if provided, these define the `bounds` of the widget.
         """
         self.parent = None
         self.children = utils.OrderedSet()
@@ -35,7 +36,7 @@ class Widget(object):
         self.handlers = {}
         self.colors = active_colors
         self.effect = tcod.background.SET
-        self.bounds = utils.Rect(0,0, 0,0)
+        self.bounds = utils.Rect(0,0, width,height)
         self.placement = utils.Rect(x,y, width,height)
 
         if parent:
