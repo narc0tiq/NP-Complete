@@ -251,6 +251,15 @@ class List(Widget):
             self._recalc_size()
             return True
 
+    @events.handler(events.KEY)
+    def on_key(self, event):
+        if utils.key_check('Up')(event.data) and self.selected_child is not self.children.first:
+            self.selected_child = self.children.triple(self.selected_child).prev
+            return True
+        elif utils.key_check('Down')(event.data) and self.selected_child is not self.children.last:
+            self.selected_child = self.children.triple(self.selected_child).next
+            return True
+
     def register_child(self, child):
         super(List, self).register_child(child)
         child.console = self.sub_console
