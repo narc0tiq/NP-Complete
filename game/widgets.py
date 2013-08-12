@@ -242,7 +242,9 @@ class Button(Label):
 class List(Widget):
     def __init__(self, parent=None, x=0, y=0, width=0, height=0):
         super(List, self).__init__(parent, x, y, width, height)
-        self.sub_console = tcod.Console(*self.bounds.size)
+        width = self.console.width - self.placement.left
+        height = self.console.height - self.placement.top
+        self.sub_console = tcod.Console(width, height)
         self._selected_child = None
 
     @events.handler(events.RESIZE)

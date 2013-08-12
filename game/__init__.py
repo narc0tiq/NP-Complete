@@ -2,7 +2,7 @@
 import time, types
 
 import tcod
-from game import config, events, widgets, dialogs
+from game import config, events, widgets, dialogs, utils
 
 
 def slow_print(widget, text, y=1):
@@ -23,7 +23,6 @@ def slow_print(widget, text, y=1):
 
 
 def main_menu():
-    print tcod.root_console.width, tcod.root_console.height
     top = widgets.Image(path="menu_bg.png",
                         width=tcod.root_console.width, height=tcod.root_console.height)
 
@@ -34,8 +33,14 @@ def main_menu():
     m = widgets.List(parent=top)
     widgets.Label(parent=m, text="This is a test")
     widgets.Label(parent=m, text="Hello.")
-    m.selected_child = m.children.last
-    widgets.Label(parent=m, text="Another long thing.")
+    q = widgets.Label(parent=m, text="This should make you quit")
+    m.selected_child = q
+
+    def key_handler(event):
+        if utils.key_check("Enter")(event.data):
+            events.post(events.QUIT)
+            return True
+    q.handlers[events.KEY] = key_handler
 #    m.add_item("n", "new game")
 #    m.add_item("l", "load game", disabled=True)
 #    m.add_item("O", "Options", on_activate=lambda w: events.post(events.LAUNCH, options_menu))
