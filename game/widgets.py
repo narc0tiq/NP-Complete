@@ -111,12 +111,12 @@ class Widget(object):
         for child in self.children:
             child.render()
 
-    def dispatch(self, event):
+    def handle(self, event):
         """
-        Dispatch an event to this widget and all its children, in that order. The first widget
-        to return True for a dispatch call is considered to have handled the event, and it
-        will not bubble further.
+        Try to handle the event here (in this widget). If not possible, return something non-true.
+        Called from self.dispatch().
         """
+
         if event.type in self.handlers:
             if event.widget is None or event.widget is self:
                 if self.handlers[event.type](event):
@@ -125,6 +125,16 @@ class Widget(object):
                 # rejected it; nobody else will take it.
                 elif event.widget is self:
                     return False
+
+    def dispatch(self, event):
+        """
+        Dispatch an event to this widget and all its children, in that order. The first widget
+        to return True for a dispatch call is considered to have handled the event, and it
+        will not bubble further.
+        """
+
+        if self.handle(event):
+            return True
 
         for child in self.children:
             if child.dispatch(event):
@@ -246,6 +256,16 @@ class List(Widget):
         height = self.console.height - self.placement.top
         self.sub_console = tcod.Console(width, height)
         self._selected_child = None
+
+    def dispatch(self, event):
+        """ Specialized variant of dispatch: Lists only pass events to the selected child. """
+
+        if self.handle(event):
+            return True
+        elif self._selected_child and self._selected_child.dispatch(event):
+            return True
+        else:
+            return False
 
     @events.handler(events.RESIZE)
     def on_resize(self, event):

@@ -32,7 +32,13 @@ def main_menu():
 
     m = widgets.List(parent=top)
     widgets.Label(parent=m, text="This is a test")
-    widgets.Label(parent=m, text="Hello.")
+    w = widgets.Label(parent=m, text="Debug item")
+
+    def debug_handler(event):
+        print event
+        return True
+    w.handlers[events.KEY] = debug_handler
+
     q = widgets.Label(parent=m, text="This should make you quit")
     m.selected_child = q
 
