@@ -32,15 +32,17 @@ def main_menu():
 
     m = widgets.List(parent=top)
     widgets.Label(parent=m, text="This is a test")
-    w = widgets.Label(parent=m, text="Debug item")
+    w = widgets.Label(parent=m, text="Debug: Press a key")
 
-    def debug_handler(event):
-        print event
+    def debug_handler(self, event):
+        if event.type == events.KEY:
+            self.text = 'Debug: %s' % utils.name_key(event.data)
+        print self.text, self.placement
         return True
-    w.handlers[events.KEY] = debug_handler
+    w.handlers[events.KEY] = types.MethodType(debug_handler, w, widgets.Label)
 
     q = widgets.Label(parent=m, text="This should make you quit")
-    m.selected_child = q
+    m.selected_child = w
 
     def key_handler(event):
         if utils.key_check("Enter")(event.data):

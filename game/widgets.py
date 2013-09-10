@@ -193,11 +193,11 @@ class Label(Widget):
 
     def _recalc_size(self):
         text = self.colors.strip(self._text)
+        x,y = self.to_screen(utils.origin)
         width = self.bounds.width
         if self.bounds.width < 1:
             width = min(len(text), self.console.width - self.placement.left)
-        height = self.console.get_height_rect(x=self.placement.left, y=self.placement.top,
-                                              width=width, text=self._text)
+        height = self.console.get_height_rect(x, y, width=width, text=text)
         if (width, height) != self.placement.size:
             self.placement.size = width, height
             events.post(events.RESIZE, data=self)
