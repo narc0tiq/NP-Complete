@@ -78,6 +78,12 @@ def set_fps_limit(limit):
 def get_fps():
     return libtcod.sys_get_fps()
 
+def get_elapsed_milli():
+    return libtcod.sys_elapsed_milli()
+
+def get_last_frame_length():
+    return libtcod.sys_get_last_frame_length()
+
 class Console(object):
     # Root console has id 0
     ROOT_ID = 0
