@@ -75,6 +75,9 @@ def flush():
 def set_fps_limit(limit):
     return libtcod.sys_set_fps(limit)
 
+def get_fps():
+    return libtcod.sys_get_fps()
+
 class Console(object):
     # Root console has id 0
     ROOT_ID = 0
