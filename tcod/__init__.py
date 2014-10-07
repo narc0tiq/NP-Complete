@@ -577,6 +577,13 @@ class color(object):
     CELADON = libtcod.celadon
     PEACH = libtcod.peach
 
+    def from_string(self, name):
+        if not name:
+            return self.WHITE
+        if name.upper() in self.__dict__:
+            return self.__dict__[name.upper()]
+        return self.WHITE
+
 class key(object):
     NONE = libtcod.KEY_NONE
     ESCAPE = libtcod.KEY_ESCAPE
